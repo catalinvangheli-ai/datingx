@@ -1,58 +1,52 @@
-# DatingX - Aplicație de Dating cu Compatibilitate Profundă
+# DatingX
 
-🌟 **Aplicație Flutter pentru România cu compatibilitate științifică**
+DatingX is a dating application focused on compatibility rather than superficial matching.
+The goal is to help users find meaningful connections based on lifestyle, values, personality, and relationship intentions.
 
-## Caracteristici
+## Concept
 
-- ✅ Algoritm compatibilitate cu ponderi (Lifestyle 30%, Values 25%, Intention 25%, Personality 15%, Others 5%)
-- ✅ 7 categorii de profil complete
-- ✅ Regula 80%: Profiluri vizibile doar când sunt ≥80% completate
-- ✅ Deal-breakere absolute cu filtrare automată
-- ✅ Material Design 3 cu tema pink/purple
+Most dating apps rely primarily on photos and quick swipes.
+DatingX takes a different approach by building user profiles that clearly describe who a person is and what they are looking for.
 
-## Structură Proiect
+Matching is based on:
+- lifestyle compatibility
+- personal values
+- emotional availability
+- relationship goals
 
-```
-DatingX/
-├── lib/
-│   ├── main.dart
-│   ├── models/
-│   │   ├── user_profile.dart (cu 7 sub-modele)
-│   │   ├── compatibility_result.dart
-│   │   └── report.dart
-│   ├── providers/
-│   │   ├── user_provider.dart
-│   │   └── matching_provider.dart
-│   ├── screens/
-│   │   ├── welcome_screen.dart
-│   │   ├── profile_setup/
-│   │   │   ├── basic_identity_screen.dart
-│   │   │   └── lifestyle_screen.dart
-│   │   └── main_screen.dart
-│   └── widgets/
-│       └── progress_indicator_widget.dart
-├── pubspec.yaml
-└── README.md
-```
+## Core Features (planned)
 
-## Cum Rulezi Aplicația
+- Detailed user profiles with structured fields
+- Compatibility-based matching (not swipe-only)
+- Clear relationship intentions
+- Advanced search and filtering
+- Privacy-focused profile visibility
+- Reporting and moderation tools
 
-1. **Instalează Flutter SDK**: https://docs.flutter.dev/get-started/install/windows
+## Target Audience
 
-2. **Instalează dependențele**:
-```bash
-cd C:\Users\hp\Documents\DatingX
-flutter pub get
-```
+- Adults (18+)
+- Users interested in meaningful connections
+- People who value clarity and compatibility over appearance-only matching
 
-3. **Rulează aplicația**:
-```bash
-flutter run
-```
+## Tech Stack (initial idea)
 
-## Locație Proiect
+- Frontend: (to be decided)
+- Backend: (to be decided)
+- Database: (to be decided)
+- Authentication: (to be decided)
 
-Proiectul este salvat în: **C:\Users\hp\Documents\DatingX**
+## Project Status
 
----
-© 2026 DatingX - Toate drepturile rezervate
+This project is in early development.
+The structure, data models, and core logic are being defined.
+
+## Goals
+
+- Reduce mismatched connections
+- Encourage honest and complete profiles
+- Improve the quality of matches, not the quantity
+
+## License
+
+License will be added later.
