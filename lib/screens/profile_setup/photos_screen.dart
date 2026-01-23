@@ -4,9 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import '../../models/user_profile.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/progress_indicator_widget.dart';
-import 'partner_criteria_screen.dart';
 import '../../services/api_service.dart';
+import '../main_screen.dart';
 
 class PhotosScreen extends StatefulWidget {
   const PhotosScreen({super.key});
@@ -220,6 +221,158 @@ class _PhotosScreenState extends State<PhotosScreen> {
     return _photoUrls.isNotEmpty && _bio.length >= 50;
   }
 
+  bool _isPublishing = false;
+
+  Future<void> _publishProfile() async {
+    if (!_canContinue()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Adaugă cel puțin o fotografie și o bio de minim 50 caractere'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPublishing = true;
+    });
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      // Salvăm pozele
+      final photos = Photos(
+        photoUrls: _photoUrls,
+        bio: _bioController.text,
+      );
+      
+      userProvider.updatePhotos(photos);
+      
+      // Verificăm completarea profilului
+      final completionPercent = userProvider.currentUser?.completionPercentage() ?? 0;
+      
+      if (completionPercent < 80) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('⚠️ Profil completat doar $completionPercent%. Minim necesar: 80%'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        setState(() {
+          _isPublishing = false;
+        });
+        return;
+      }
+      
+      // Construim datele complete ale profilului pentru salvare
+      final profile = userProvider.currentUser;
+      final profileData = {
+        'userId': authProvider.currentAuthUser?.id,
+        // Basic Identity
+        'name': profile?.basicIdentity?.name,
+        'age': profile?.basicIdentity?.age,
+        'gender': profile?.basicIdentity?.gender,
+        'country': profile?.basicIdentity?.country,
+        'city': profile?.basicIdentity?.city,
+        'occupation': profile?.basicIdentity?.occupation,
+        'phoneNumber': profile?.basicIdentity?.phoneNumber,
+        
+        // Lifestyle
+        'smokingHabit': profile?.lifestyle?.smoking,
+        'drinkingHabit': profile?.lifestyle?.alcohol,
+        'fitnessLevel': profile?.lifestyle?.exercise,
+        'diet': profile?.lifestyle?.diet,
+        'petPreference': profile?.lifestyle?.pets,
+        
+        // Personality
+        'introvertExtrovert': profile?.personality?.socialType,
+        'spontaneousPlanned': profile?.personality?.emotionalPace,
+        'creativeAnalytical': profile?.personality?.conflictStyle,
+        
+        // Values
+        'relationshipType': profile?.intention?.relationshipGoal,
+        'wantsChildren': profile?.values?.familyPlans,
+        'religionImportance': profile?.values?.religion,
+        'politicalAlignment': profile?.values?.politics,
+        
+        // Interests
+        'interests': profile?.interests?.hobbies,
+        
+        // Photos
+        'photos': _photoUrls.map((url) {
+          return {
+            'url': url,
+            'cloudinaryId': url.split('/').last.split('.').first,
+          };
+        }).toList(),
+        
+        // Bio
+        'bio': _bioController.text,
+        
+        // Metadata
+        'profileComplete': true,
+      };
+      
+      print('📤 Publicăm profilul cu datele: ${profileData.toString()}');
+      
+      // Salvăm profilul pe server
+      final response = await ApiService.saveProfile(profileData);
+      
+      print('✅ Răspuns server la publicare: ${response.toString()}');
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '🎉 Anunțul tău matrimonial a fost publicat!\nAcum poți fi găsit/ă de alți utilizatori.',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
+          ),
+        );
+        
+        await Future.delayed(const Duration(seconds: 1));
+        
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => MainScreen()),
+          (route) => false,
+        );
+      }
+      
+    } catch (e) {
+      print('❌ Eroare la publicarea profilului: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Eroare la publicare: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishing = false;
+        });
+      }
+    }
+  }
+
   Future<void> _pickImage() async {
     if (_photoUrls.length >= 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -340,27 +493,6 @@ class _PhotosScreenState extends State<PhotosScreen> {
     }
   }
 
-  void _continue() {
-    if (_canContinue()) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      
-      // Salvează URL-urile Cloudinary și bio
-      final photos = Photos(
-        photoUrls: _photoUrls,
-        bio: _bio,
-      );
-      
-      userProvider.updatePhotos(photos);
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PartnerCriteriaScreen())
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Adaugă cel puțin o fotografie și o bio de minim 50 caractere'))
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -450,13 +582,13 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: _canContinue() ? _continue : null,
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Continuă'),
+                    onPressed: _canContinue() ? _publishProfile : null,
+                    icon: const Icon(Icons.celebration),
+                    label: const Text('🎉 Publică Anunțul Matrimonial'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: _canContinue() ? Colors.red : null,
-                      foregroundColor: _canContinue() ? Colors.white : null,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      backgroundColor: _canContinue() ? const Color(0xFFE91E63) : null,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),

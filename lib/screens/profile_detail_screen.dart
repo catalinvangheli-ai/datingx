@@ -31,20 +31,16 @@ class ProfileDetailScreen extends StatelessWidget {
               _buildPhoneSection(context),
 
             // Lifestyle
-            if (profileData['lifestyle'] != null) _buildLifestyleSection(),
+            _buildLifestyleSection(),
 
             // Personality
-            if (profileData['personality'] != null) _buildPersonalitySection(),
+            _buildPersonalitySection(),
 
             // Values
-            if (profileData['values'] != null) _buildValuesSection(),
+            _buildValuesSection(),
 
             // Interests
-            if (profileData['interests'] != null) _buildInterestsSection(),
-
-            // Partner Criteria
-            if (profileData['partnerCriteria'] != null)
-              _buildPartnerCriteriaSection(),
+            _buildInterestsSection(),
 
             // Buton mesaj
             _buildMessageButton(context),
@@ -270,76 +266,95 @@ class ProfileDetailScreen extends StatelessWidget {
   }
 
   Widget _buildLifestyleSection() {
-    final lifestyle = profileData['lifestyle'] as Map<String, dynamic>;
+    // Câmpuri individuale din backend, nu obiect nested
+    final smoking = profileData['smokingHabit'];
+    final drinking = profileData['drinkingHabit'];
+    final exercise = profileData['fitnessLevel'];
+    final diet = profileData['diet'];
+    final pets = profileData['petPreference'];
+    
+    if (smoking == null && drinking == null && exercise == null && diet == null && pets == null) {
+      return const SizedBox.shrink();
+    }
+    
     return _buildSection(
       'Stil de Viață',
       Icons.favorite,
       [
-        if (lifestyle['smoking'] != null)
-          _buildInfoRow('🚬 Fumat', lifestyle['smoking']),
-        if (lifestyle['drinking'] != null)
-          _buildInfoRow('🍷 Băut', lifestyle['drinking']),
-        if (lifestyle['exercise'] != null)
-          _buildInfoRow('💪 Sport', lifestyle['exercise']),
-        if (lifestyle['diet'] != null)
-          _buildInfoRow('🍽️ Dietă', lifestyle['diet']),
-        if (lifestyle['pets'] != null)
-          _buildInfoRow('🐾 Animale', lifestyle['pets']),
+        if (smoking != null)
+          _buildInfoRow('🚬 Fumat', smoking),
+        if (drinking != null)
+          _buildInfoRow('🍷 Băut', drinking),
+        if (exercise != null)
+          _buildInfoRow('💪 Sport', exercise),
+        if (diet != null)
+          _buildInfoRow('🍽️ Dietă', diet),
+        if (pets != null)
+          _buildInfoRow('🐾 Animale', pets),
       ],
     );
   }
 
   Widget _buildPersonalitySection() {
-    final personality = profileData['personality'] as Map<String, dynamic>;
+    // Câmpuri individuale din backend
+    final introExtro = profileData['introvertExtrovert'];
+    final spontaneous = profileData['spontaneousPlanned'];
+    final creative = profileData['creativeAnalytical'];
+    
+    if (introExtro == null && spontaneous == null && creative == null) {
+      return const SizedBox.shrink();
+    }
+    
     return _buildSection(
       'Personalitate',
       Icons.psychology,
       [
-        if (personality['traits'] != null && personality['traits'].isNotEmpty)
-          _buildChipsList(
-              '✨ Trăsături', List<String>.from(personality['traits'])),
-        if (personality['socialStyle'] != null)
-          _buildInfoRow('👥 Stil social', personality['socialStyle']),
-        if (personality['communicationStyle'] != null)
-          _buildInfoRow(
-              '💬 Comunicare', personality['communicationStyle']),
+        if (introExtro != null)
+          _buildInfoRow('👥 Stil social', introExtro),
+        if (spontaneous != null)
+          _buildInfoRow('⏱️ Ritm emoțional', spontaneous),
+        if (creative != null)
+          _buildInfoRow('🧠 Stil conflict', creative),
       ],
     );
   }
 
   Widget _buildValuesSection() {
-    final values = profileData['values'] as Map<String, dynamic>;
+    // Câmpuri individuale din backend
+    final religion = profileData['religionImportance'];
+    final politics = profileData['politicalAlignment'];
+    final wantKids = profileData['wantsChildren'];
+    final relationship = profileData['relationshipType'];
+    
+    if (religion == null && politics == null && wantKids == null && relationship == null) {
+      return const SizedBox.shrink();
+    }
+    
     return _buildSection(
       'Valori',
       Icons.star,
       [
-        if (values['religion'] != null)
-          _buildInfoRow('🙏 Religie', values['religion']),
-        if (values['politicalViews'] != null)
-          _buildInfoRow('🗳️ Politică', values['politicalViews']),
-        if (values['wantKids'] != null)
-          _buildInfoRow('👶 Copii', values['wantKids']),
-        if (values['familyOrientation'] != null)
-          _buildInfoRow('👨‍👩‍👧‍👦 Familie', values['familyOrientation']),
+        if (religion != null)
+          _buildInfoRow('🙏 Religie', religion),
+        if (politics != null)
+          _buildInfoRow('🗳️ Politică', politics),
+        if (wantKids != null)
+          _buildInfoRow('👶 Copii', wantKids),
+        if (relationship != null)
+          _buildInfoRow('💑 Tip relație', relationship),
       ],
     );
   }
 
   Widget _buildInterestsSection() {
-    final interests = profileData['interests'] as Map<String, dynamic>;
-    final allInterests = <String>[];
-
-    if (interests['hobbies'] != null) {
-      allInterests.addAll(List<String>.from(interests['hobbies']));
-    }
-    if (interests['music'] != null) {
-      allInterests.addAll(List<String>.from(interests['music']));
-    }
-    if (interests['movies'] != null) {
-      allInterests.addAll(List<String>.from(interests['movies']));
-    }
-    if (interests['sports'] != null) {
-      allInterests.addAll(List<String>.from(interests['sports']));
+    // interests vine ca Array direct din backend, nu ca Map
+    final interestsData = profileData['interests'];
+    
+    if (interestsData == null) return const SizedBox.shrink();
+    
+    List<String> allInterests = [];
+    if (interestsData is List) {
+      allInterests = List<String>.from(interestsData);
     }
 
     if (allInterests.isEmpty) return const SizedBox.shrink();
@@ -348,23 +363,6 @@ class ProfileDetailScreen extends StatelessWidget {
       'Interese',
       Icons.interests,
       [_buildChipsList('🎯 Pasiuni', allInterests)],
-    );
-  }
-
-  Widget _buildPartnerCriteriaSection() {
-    final criteria = profileData['partnerCriteria'] as Map<String, dynamic>;
-    return _buildSection(
-      'Ce caută la partener',
-      Icons.favorite_border,
-      [
-        if (criteria['dealBreakers'] != null &&
-            criteria['dealBreakers'].isNotEmpty)
-          _buildChipsList(
-              '❌ Excluse', List<String>.from(criteria['dealBreakers'])),
-        if (criteria['mustHaves'] != null && criteria['mustHaves'].isNotEmpty)
-          _buildChipsList(
-              '✅ Importante', List<String>.from(criteria['mustHaves'])),
-      ],
     );
   }
 
