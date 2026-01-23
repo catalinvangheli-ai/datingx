@@ -172,9 +172,9 @@ router.post('/search', async (req, res) => {
       query.interests = { $in: interests };
     }
 
-    // Execute search
+    // Execute search - returnează TOATE câmpurile pentru vizualizare completă
     const results = await Profile.find(query)
-      .select('name age gender country city height occupation education interests smoking drinking relationshipGoal photos')
+      .select('-userId -__v') // Exclude doar userId și versioning
       .limit(50);
 
     res.json({

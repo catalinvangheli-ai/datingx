@@ -24,12 +24,13 @@ dependencies:
   
   # Networking
   http: ^1.1.2
+  url_launcher: ^6.2.4
   
   # Utilities
   intl: ^0.18.1
   uuid: ^4.2.2
   image_picker: ^1.0.7
-  file_picker: ^6.1.1
+  file_picker: ^8.0.0
   crypto: ^3.0.3
 
 dev_dependencies:

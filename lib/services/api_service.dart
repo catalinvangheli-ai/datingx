@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
 
 class ApiService {
@@ -105,6 +106,16 @@ class ApiService {
     
     return _handleResponse(response);
   }
+
+  static Future<Map<String, dynamic>> searchProfiles(Map<String, dynamic> criteria) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/profile/search'),
+      headers: _getHeaders(includeAuth: false), // Permite căutare fără autentificare
+      body: jsonEncode(criteria),
+    );
+    
+    return _handleResponse(response);
+  }
   
   // Photo endpoints
   static Future<Map<String, dynamic>> uploadPhoto(List<int> imageBytes, String fileName) async {
@@ -122,6 +133,7 @@ class ApiService {
         'photo',
         imageBytes,
         filename: fileName,
+        contentType: MediaType('image', _getImageType(fileName)),
       ),
     );
     
@@ -148,6 +160,26 @@ class ApiService {
       return data;
     } else {
       throw Exception(data['message'] ?? 'Eroare la comunicarea cu serverul');
+    }
+  }
+  
+  // Helper to get image type from filename
+  static String _getImageType(String fileName) {
+    final extension = fileName.toLowerCase().split('.').last;
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'jpeg';
+      case 'png':
+        return 'png';
+      case 'gif':
+        return 'gif';
+      case 'webp':
+        return 'webp';
+      case 'bmp':
+        return 'bmp';
+      default:
+        return 'jpeg'; // default fallback
     }
   }
 }

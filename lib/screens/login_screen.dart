@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_provider.dart';
 import 'welcome_screen.dart';
+import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     
     bool success;
     if (_isLogin) {
@@ -44,9 +47,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-      );
+      print('🔍 Login successful, loading profile from server...');
+      
+      // Încarcă profilul din backend
+      final profileData = await authProvider.loadUserProfileFromServer();
+      print('📋 Profile data received: $profileData');
+      
+      // Verifică dacă profilul este complet
+      if (profileData != null && profileData['profileComplete'] == true) {
+        print('✅ Profile complete! Navigating to MainScreen...');
+        // Profilul e complet - mergi direct la MainScreen
+        userProvider.loadUserProfileFromServer(profileData);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        print('⚠️ Profile incomplete or missing. Navigating to WelcomeScreen...');
+        print('   - profileData is null: ${profileData == null}');
+        print('   - profileComplete value: ${profileData?['profileComplete']}');
+        // Profilul incomplet sau lipsește - mergi la WelcomeScreen pentru setup
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
+      }
     }
   }
 

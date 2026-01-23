@@ -1,22 +1,27 @@
 class BasicIdentity {
+  final String name;
   final String gender;
   final int age;
   final String country;
   final String city;
   final int height;
   final String occupation;
+  final String? phoneNumber; // Opțional - pentru contact
 
   BasicIdentity({
+    required this.name,
     required this.gender,
     required this.age,
     required this.country,
     required this.city,
     required this.height,
     required this.occupation,
+    this.phoneNumber,
   });
 
   bool isComplete() {
-    return gender.isNotEmpty && 
+    return name.isNotEmpty &&
+           gender.isNotEmpty && 
            age > 0 && 
            country.isNotEmpty &&
            city.isNotEmpty && 
@@ -25,21 +30,25 @@ class BasicIdentity {
   }
 
   Map<String, dynamic> toJson() => {
+    'name': name,
     'gender': gender,
     'age': age,
     'country': country,
     'city': city,
     'height': height,
     'occupation': occupation,
+    'phoneNumber': phoneNumber,
   };
 
   factory BasicIdentity.fromJson(Map<String, dynamic> json) => BasicIdentity(
+    name: json['name'] ?? '',
     gender: json['gender'] ?? '',
     age: json['age'] ?? 0,
     country: json['country'] ?? '',
     city: json['city'] ?? '',
     height: json['height'] ?? 0,
     occupation: json['occupation'] ?? '',
+    phoneNumber: json['phoneNumber'],
   );
 }
 

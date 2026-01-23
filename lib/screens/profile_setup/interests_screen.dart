@@ -194,6 +194,8 @@ class _InterestsScreenState extends State<InterestsScreen> {
                     label: const Text('Continuă'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: _canContinue() ? Colors.red : null,
+                      foregroundColor: _canContinue() ? Colors.white : null,
                     ),
                   ),
                 ),

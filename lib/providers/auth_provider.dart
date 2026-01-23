@@ -163,114 +163,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Salvează profilul utilizatorului
-  Future<bool> saveUserProfile(UserProfile profile) async {
-    if (_currentAuthUser == null) return false;
-
-    try {
-      // Convertește profilul în format pentru API
-      final profileData = {
-        'name': profile.basicIdentity.name,
-        'age': profile.basicIdentity.age,
-        'gender': profile.basicIdentity.gender,
-        'country': profile.basicIdentity.country,
-        'city': profile.basicIdentity.city,
-        'occupation': profile.basicIdentity.occupation,
-        'smokingHabit': profile.lifestyle.smokingHabit,
-        'drinkingHabit': profile.lifestyle.drinkingHabit,
-        'fitnessLevel': profile.lifestyle.fitnessLevel,
-        'diet': profile.lifestyle.diet,
-        'petPreference': profile.lifestyle.petPreference,
-        'introvertExtrovert': profile.personality.introvertExtrovert,
-        'spontaneousPlanned': profile.personality.spontaneousPlanned,
-        'creativeAnalytical': profile.personality.creativeAnalytical,
-        'relationshipType': profile.values.relationshipType,
-        'wantsChildren': profile.values.wantsChildren,
-        'religionImportance': profile.values.religionImportance,
-        'politicalAlignment': profile.values.politicalAlignment,
-        'interests': profile.interests.interests,
-        'partnerAgeMin': profile.partnerCriteria.ageRange.start.toInt(),
-        'partnerAgeMax': profile.partnerCriteria.ageRange.end.toInt(),
-        'partnerGender': profile.partnerCriteria.gender,
-        'dealBreakers': profile.partnerCriteria.dealBreakers,
-        'bio': profile.bio,
-      };
-      
-      await ApiService.saveProfile(profileData);
-      
-      return true;
-    } catch (e) {
-      print('Eroare la salvarea profilului: $e');
-      return false;
-    }
-  }
-
-  // Încarcă profilul utilizatorului
-  Future<UserProfile?> loadUserProfile() async {
-    if (_currentAuthUser == null) return null;
-
-    try {
-      final response = await ApiService.getProfile();
-      
-      if (response['success'] == true && response['profile'] != null) {
-        final p = response['profile'];
-        
-        // Convertește datele din API în UserProfile
-        return UserProfile(
-          userId: _currentAuthUser!.id,
-          basicIdentity: BasicIdentity(
-            name: p['name'] ?? '',
-            age: p['age'] ?? 18,
-            gender: p['gender'] ?? '',
-            country: p['country'] ?? '',
-            city: p['city'] ?? '',
-            occupation: p['occupation'] ?? '',
-          ),
-          lifestyle: Lifestyle(
-            smokingHabit: p['smokingHabit'] ?? '',
-            drinkingHabit: p['drinkingHabit'] ?? '',
-            fitnessLevel: p['fitnessLevel'] ?? '',
-            diet: p['diet'] ?? '',
-            petPreference: p['petPreference'] ?? '',
-          ),
-          personality: Personality(
-            introvertExtrovert: p['introvertExtrovert'] ?? '',
-            spontaneousPlanned: p['spontaneousPlanned'] ?? '',
-            creativeAnalytical: p['creativeAnalytical'] ?? '',
-          ),
-          values: Values(
-            relationshipType: p['relationshipType'] ?? '',
-            wantsChildren: p['wantsChildren'] ?? '',
-            religionImportance: p['religionImportance'] ?? '',
-            politicalAlignment: p['politicalAlignment'] ?? '',
-          ),
-          intention: RelationshipIntention.longTerm,
-          interests: Interests(
-            interests: List<String>.from(p['interests'] ?? []),
-          ),
-          photos: PhotoData(
-            photos: (p['photos'] as List?)?.map((photo) => photo['url'] as String).toList() ?? [],
-          ),
-          partnerCriteria: PartnerCriteria(
-            ageRange: RangeValues(
-              (p['partnerAgeMin'] ?? 18).toDouble(),
-              (p['partnerAgeMax'] ?? 80).toDouble(),
-            ),
-            gender: p['partnerGender'] ?? '',
-            dealBreakers: List<String>.from(p['dealBreakers'] ?? []),
-          ),
-          bio: p['bio'] ?? '',
-          updatedAt: DateTime.parse(p['lastUpdated'] ?? DateTime.now().toIso8601String()),
-        );
-      }
-      
-      return null;
-    } catch (e) {
-      print('Eroare la încărcarea profilului: $e');
-      return null;
-    }
-  }
-
   // Șterge profilul (păstrează contul)
   Future<bool> deleteUserProfile() async {
     if (_currentAuthUser == null) return false;
@@ -285,7 +177,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Încarcă profilul utilizatorului
+  // Încarcă profilul utilizatorului din backend
+  Future<Map<String, dynamic>?> loadUserProfileFromServer() async {
+    if (_currentAuthUser == null) return null;
+
+    try {
+      final response = await ApiService.getProfile();
+      if (response['success'] == true && response['profile'] != null) {
+        return response['profile'];
+      }
+      return null;
+    } catch (e) {
+      print('Eroare la încărcarea profilului de pe server: $e');
+      return null;
+    }
+  }
+
+  // Încarcă profilul utilizatorului (din localStorage - deprecated)
   Future<UserProfile?> loadUserProfile() async {
     if (_currentAuthUser == null) return null;
 

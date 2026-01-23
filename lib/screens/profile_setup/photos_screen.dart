@@ -20,6 +20,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
   final List<String> _cloudinaryIds = []; // For deletion
   String _bio = '';
   final _bioController = TextEditingController();
+  bool _isCreatingProfile = false;
 
   @override
   void initState() {
@@ -171,6 +172,50 @@ class _PhotosScreenState extends State<PhotosScreen> {
     return generatedBio;
   }
 
+  Future<void> _createProfileOnServer() async {
+    if (_isCreatingProfile) return; // Prevent duplicate calls
+    
+    print('🔧 Attempting to create profile on server...');
+    
+    setState(() {
+      _isCreatingProfile = true;
+    });
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final profile = userProvider.currentUser;
+      
+      if (profile == null) {
+        print('❌ No profile in userProvider');
+        return;
+      }
+
+      print('📋 Profile exists, preparing data...');
+
+      // Prepare profile data for API - simplified version
+      final profileData = {        'name': profile.basicIdentity?.name ?? '',        'gender': profile.basicIdentity?.gender ?? '',
+        'age': profile.basicIdentity?.age ?? 18,
+        'city': profile.basicIdentity?.city ?? '',
+        'country': profile.basicIdentity?.country ?? '',
+        'height': profile.basicIdentity?.height ?? 170,
+        'occupation': profile.basicIdentity?.occupation ?? '',
+      };
+
+      print('📤 Sending profile to server: $profileData');
+
+      // Create/update profile on server
+      final response = await ApiService.saveProfile(profileData);
+      print('✅ Profile created on server: $response');
+    } catch (e) {
+      print('❌ Error creating profile on server: $e');
+      // Don't show error to user - continue anyway
+    } finally {
+      setState(() {
+        _isCreatingProfile = false;
+      });
+    }
+  }
+
   bool _canContinue() {
     return _photoUrls.isNotEmpty && _bio.length >= 50;
   }
@@ -184,6 +229,11 @@ class _PhotosScreenState extends State<PhotosScreen> {
     }
 
     try {
+      // Create profile on server BEFORE uploading photo
+      if (!_isCreatingProfile) {
+        await _createProfileOnServer();
+      }
+      
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
@@ -220,10 +270,16 @@ class _PhotosScreenState extends State<PhotosScreen> {
         }
         
         // Upload la Cloudinary prin API
+        print('🔄 Starting photo upload...');
+        print('📸 File name: ${file.name}');
+        print('📦 File size: ${file.bytes!.length} bytes');
+        
         final response = await ApiService.uploadPhoto(
           file.bytes!,
           file.name,
         );
+        
+        print('✅ Upload response: $response');
         
         if (response['success'] == true) {
           setState(() {
@@ -242,6 +298,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         }
       }
     } catch (e) {
+      print('❌ Photo upload error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -393,11 +450,13 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: _canContinue() ? _saveAndContinue : null,
+                    onPressed: _canContinue() ? _continue : null,
                     icon: const Icon(Icons.arrow_forward),
                     label: const Text('Continuă'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: _canContinue() ? Colors.red : null,
+                      foregroundColor: _canContinue() ? Colors.white : null,
                     ),
                   ),
                 ),

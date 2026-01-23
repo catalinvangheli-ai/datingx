@@ -187,14 +187,12 @@ class EditProfileScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        final saved = await authProvider.saveUserProfile(profile);
+                        // Salvare automată prin userProvider
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(saved 
-                                  ? 'Profil salvat cu succes!' 
-                                  : 'Eroare la salvarea profilului'),
-                              backgroundColor: saved ? Colors.green : Colors.red,
+                            const SnackBar(
+                              content: Text('Profil salvat cu succes!'),
+                              backgroundColor: Colors.green,
                             ),
                           );
                         }

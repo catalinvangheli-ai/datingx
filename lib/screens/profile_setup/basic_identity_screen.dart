@@ -15,12 +15,14 @@ class BasicIdentityScreen extends StatefulWidget {
 
 class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   String _gender = '';
   int _age = 25;
   String _country = '';
   final _cityController = TextEditingController();
   int _height = 170;
   final _occupationController = TextEditingController();
+  final _phoneController = TextEditingController(); // Opțional
   
   final List<String> _europeanCountries = [
     'România',
@@ -73,8 +75,10 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _cityController.dispose();
     _occupationController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -92,12 +96,14 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
       }
       
       final identity = BasicIdentity(
+        name: _nameController.text,
         gender: _gender,
         age: _age,
         country: _country,
         city: _cityController.text,
         height: _height,
         occupation: _occupationController.text,
+        phoneNumber: _phoneController.text.isNotEmpty ? _phoneController.text : null,
       );
       
       userProvider.updateBasicIdentity(identity);
@@ -117,6 +123,18 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const ProfileProgressIndicator(currentStep: 1, totalSteps: 7),
+              
+              // Name field
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nume',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value == null || value.isEmpty ? 'Introdu numele' : null,
+              ),
+              const SizedBox(height: 24),
+              
               const SizedBox(height: 32),
               const Text('Gen', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -159,6 +177,21 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
                 controller: _occupationController,
                 decoration: const InputDecoration(labelText: 'Ocupație', border: OutlineInputBorder()),
                 validator: (value) => value == null || value.isEmpty ? 'Introdu ocupația' : null,
+              ),
+              const SizedBox(height: 24),
+              
+              // Câmp telefon opțional
+              TextFormField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Telefon (opțional)',
+                  hintText: '+40 xxx xxx xxx',
+                  border: OutlineInputBorder(),
+                  helperText: '📞 Dacă vrei să poți fi contactat și telefonic',
+                  helperMaxLines: 2,
+                  suffixIcon: Icon(Icons.phone, color: Colors.grey[400]),
+                ),
+                keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 32),
               

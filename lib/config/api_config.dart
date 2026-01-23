@@ -1,8 +1,8 @@
 class ApiConfig {
-  // Local development - change to Railway URL after deployment
-  static const String baseUrl = 'http://localhost:5000/api';
+  // Production backend on Railway
+  static const String baseUrl = 'https://datingx-production.up.railway.app/api';
   
-  // After Railway deploy, use: https://your-app.up.railway.app/api
+  // For local development, use: http://localhost:5000/api
   
   // Endpoints
   static const String authRegister = '/auth/register';
