@@ -15,7 +15,7 @@ const profileSchema = new mongoose.Schema({
   },
   
   // Basic Identity
-  name: { type: String, required: true },
+  name: { type: String },
   age: { type: Number, required: true },
   gender: { type: String, required: true },
   country: { type: String, required: true },
