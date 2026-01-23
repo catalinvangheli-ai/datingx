@@ -162,6 +162,7 @@ class UserProvider extends ChangeNotifier {
           socialType: profileData['introvertExtrovert'] ?? '',
           emotionalPace: profileData['spontaneousPlanned'] ?? '',
           conflictStyle: profileData['creativeAnalytical'] ?? '',
+          personalSpace: '', // Nu e salvat în backend deocamdată
         );
       }
       
@@ -172,6 +173,8 @@ class UserProvider extends ChangeNotifier {
           familyPlans: profileData['wantsChildren'] ?? '',
           religion: profileData['religionImportance'] ?? '',
           politics: profileData['politicalAlignment'] ?? '',
+          money: '', // Nu e salvat în backend deocamdată
+          careerAmbition: '', // Nu e salvat în backend deocamdată
         );
       }
       
@@ -180,6 +183,7 @@ class UserProvider extends ChangeNotifier {
       if (profileData['relationshipType'] != null) {
         intention = RelationshipIntention(
           relationshipGoal: profileData['relationshipType'] ?? '',
+          emotionalAvailability: '', // Nu e salvat în backend deocamdată
         );
       }
       
