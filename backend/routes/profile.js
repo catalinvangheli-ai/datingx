@@ -151,7 +151,7 @@ router.post('/search', async (req, res) => {
     // Build search query
     const query = {
       profileComplete: true,
-      gender: gender,
+      gender: new RegExp(`^${gender}$`, 'i'), // Case-insensitive exact match
       age: { $gte: minAge, $lte: maxAge }
     };
 
