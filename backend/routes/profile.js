@@ -121,4 +121,74 @@ router.get('/matches', authMiddleware, async (req, res) => {
   }
 });
 
+// Search profiles with criteria (NO AUTH REQUIRED - public search)
+router.post('/search', async (req, res) => {
+  try {
+    const {
+      gender,
+      minAge,
+      maxAge,
+      country,
+      city,
+      minHeight,
+      maxHeight,
+      education,
+      occupation,
+      interests,
+      smoking,
+      drinking,
+      relationshipGoal
+    } = req.body;
+
+    // Validate required fields
+    if (!gender || !minAge || !maxAge) {
+      return res.status(400).json({
+        success: false,
+        message: 'Genul și vârsta sunt obligatorii pentru căutare.'
+      });
+    }
+
+    // Build search query
+    const query = {
+      profileComplete: true,
+      gender: gender,
+      age: { $gte: minAge, $lte: maxAge }
+    };
+
+    // Add optional filters
+    if (country) query.country = new RegExp(country, 'i');
+    if (city) query.city = new RegExp(city, 'i');
+    if (minHeight && maxHeight) {
+      query.height = { $gte: minHeight, $lte: maxHeight };
+    }
+    if (education) query.education = education;
+    if (occupation) query.occupation = new RegExp(occupation, 'i');
+    if (smoking) query.smoking = smoking;
+    if (drinking) query.drinking = drinking;
+    if (relationshipGoal) query.relationshipGoal = relationshipGoal;
+    
+    // Interests matching (at least one common interest)
+    if (interests && interests.length > 0) {
+      query.interests = { $in: interests };
+    }
+
+    // Execute search
+    const results = await Profile.find(query)
+      .select('name age gender country city height occupation education interests smoking drinking relationshipGoal photos')
+      .limit(50);
+
+    res.json({
+      success: true,
+      results,
+      count: results.length
+    });
+  } catch (error) {
+    console.error('Search profiles error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare la căutarea profilurilor.'
+    });
+  }
+});
+
 module.exports = router;
