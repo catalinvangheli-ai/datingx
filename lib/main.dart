@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/user_provider.dart';
 import 'providers/matching_provider.dart';
 import 'providers/auth_provider.dart';
-import 'screens/main_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const DatingXApp());
@@ -32,7 +32,7 @@ class DatingXApp extends StatelessWidget {
           ),
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-        home: const MainScreen(),
+        home: const SplashScreen(), // Start with splash screen to load auth and profile
       ),
     );
   }

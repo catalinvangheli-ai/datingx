@@ -52,6 +52,7 @@ const profileSchema = new mongoose.Schema({
   partnerAgeMax: Number,
   partnerGender: String,
   dealBreakers: [String],
+  mustHaves: [String],
   
   // Auto-generated Bio
   bio: { type: String },

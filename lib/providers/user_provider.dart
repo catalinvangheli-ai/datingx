@@ -134,24 +134,74 @@ class UserProvider extends ChangeNotifier {
       
       // Lifestyle
       Lifestyle? lifestyle;
-      if (profileData['smoking'] != null || profileData['alcohol'] != null) {
+      if (profileData['smokingHabit'] != null || profileData['drinkingHabit'] != null) {
         lifestyle = Lifestyle(
           schedule: profileData['schedule'] ?? '',
-          smoking: profileData['smoking'] ?? '',
-          alcohol: profileData['alcohol'] ?? '',
-          exercise: profileData['exercise'] ?? '',
+          smoking: profileData['smokingHabit'] ?? '',
+          alcohol: profileData['drinkingHabit'] ?? '',
+          exercise: profileData['fitnessLevel'] ?? '',
           diet: profileData['diet'] ?? '',
-          pets: profileData['pets'] ?? '',
+          pets: profileData['petPreference'] ?? '',
         );
       }
       
       // Interests
       Interests? interests;
-      if (profileData['hobbies'] != null && profileData['hobbies'] is List) {
+      if (profileData['interests'] != null && profileData['interests'] is List) {
         interests = Interests(
-          hobbies: List<String>.from(profileData['hobbies'] ?? []),
+          hobbies: List<String>.from(profileData['interests'] ?? []),
           musicTaste: List<String>.from(profileData['musicTaste'] ?? []),
           travelAttitude: profileData['travelAttitude'] ?? '',
+        );
+      }
+      
+      // Personality
+      Personality? personality;
+      if (profileData['introvertExtrovert'] != null) {
+        personality = Personality(
+          socialType: profileData['introvertExtrovert'] ?? '',
+          emotionalPace: profileData['spontaneousPlanned'] ?? '',
+          conflictStyle: profileData['creativeAnalytical'] ?? '',
+        );
+      }
+      
+      // Values
+      Values? values;
+      if (profileData['wantsChildren'] != null || profileData['religionImportance'] != null) {
+        values = Values(
+          familyPlans: profileData['wantsChildren'] ?? '',
+          religion: profileData['religionImportance'] ?? '',
+          politics: profileData['politicalAlignment'] ?? '',
+        );
+      }
+      
+      // Intention
+      RelationshipIntention? intention;
+      if (profileData['relationshipType'] != null) {
+        intention = RelationshipIntention(
+          relationshipGoal: profileData['relationshipType'] ?? '',
+        );
+      }
+      
+      // Photos
+      Photos? photos;
+      if (profileData['photos'] != null && profileData['photos'] is List) {
+        final photoList = profileData['photos'] as List<dynamic>;
+        final photoUrls = photoList.map((p) => p['url'] as String).toList();
+        photos = Photos(
+          photoUrls: photoUrls,
+          bio: profileData['bio'] ?? '',
+        );
+      }
+      
+      // Partner Criteria
+      PartnerCriteria? partnerCriteria;
+      if (profileData['dealBreakers'] != null || profileData['mustHaves'] != null) {
+        partnerCriteria = PartnerCriteria(
+          ageRange: '',
+          maxDistance: 0,
+          dealBreakers: List<String>.from(profileData['dealBreakers'] ?? []),
+          mustHaves: List<String>.from(profileData['mustHaves'] ?? []),
         );
       }
       
@@ -161,7 +211,12 @@ class UserProvider extends ChangeNotifier {
         updatedAt: DateTime.now(),
         basicIdentity: basicIdentity,
         lifestyle: lifestyle,
+        personality: personality,
+        values: values,
+        intention: intention,
         interests: interests,
+        photos: photos,
+        partnerCriteria: partnerCriteria,
       );
       
       print('✅ Profile loaded successfully. Completion: ${getCompletionPercentage()}%');
