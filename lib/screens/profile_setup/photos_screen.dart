@@ -325,6 +325,16 @@ class _PhotosScreenState extends State<PhotosScreen> {
       
       print('✅ Răspuns server la publicare: ${response.toString()}');
       
+      // IMPORTANT: Reîncarcă profilul de pe server pentru a sincroniza datele
+      if (response['success'] == true) {
+        print('🔄 Reîncărcăm profilul de pe server...');
+        final savedProfileData = await authProvider.loadUserProfileFromServer();
+        if (savedProfileData != null) {
+          userProvider.loadUserProfileFromServer(savedProfileData);
+          print('✅ Profil reîncărcat cu succes! Completion: ${userProvider.getCompletionPercentage()}%');
+        }
+      }
+      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
