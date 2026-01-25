@@ -128,6 +128,7 @@ router.post('/search', async (req, res) => {
       gender,
       minAge,
       maxAge,
+      relationshipType,
       country,
       city,
       minHeight,
@@ -136,15 +137,14 @@ router.post('/search', async (req, res) => {
       occupation,
       interests,
       smoking,
-      drinking,
-      relationshipGoal
+      drinking
     } = req.body;
 
     // Validate required fields
-    if (!gender || !minAge || !maxAge) {
+    if (!gender || !minAge || !maxAge || !relationshipType) {
       return res.status(400).json({
         success: false,
-        message: 'Genul și vârsta sunt obligatorii pentru căutare.'
+        message: 'Genul, vârsta și tipul de relație sunt obligatorii pentru căutare.'
       });
     }
 
@@ -152,7 +152,8 @@ router.post('/search', async (req, res) => {
     const query = {
       profileComplete: true,
       gender: new RegExp(`^${gender}$`, 'i'), // Case-insensitive exact match
-      age: { $gte: minAge, $lte: maxAge }
+      age: { $gte: minAge, $lte: maxAge },
+      relationshipType: new RegExp(relationshipType, 'i') // Required relationship type match
     };
 
     // Add optional filters
@@ -165,7 +166,6 @@ router.post('/search', async (req, res) => {
     if (occupation) query.occupation = new RegExp(occupation, 'i');
     if (smoking) query.smoking = smoking;
     if (drinking) query.drinking = drinking;
-    if (relationshipGoal) query.relationshipGoal = relationshipGoal;
     
     // Interests matching (at least one common interest)
     if (interests && interests.length > 0) {

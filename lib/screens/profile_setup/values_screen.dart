@@ -13,6 +13,7 @@ class ValuesScreen extends StatefulWidget {
 }
 
 class _ValuesScreenState extends State<ValuesScreen> {
+  String _relationshipType = '';
   String _familyPlans = '';
   String _religion = '';
   String _politics = '';
@@ -20,7 +21,8 @@ class _ValuesScreenState extends State<ValuesScreen> {
   String _careerAmbition = '';
 
   bool _canContinue() {
-    return _familyPlans.isNotEmpty && 
+    return _relationshipType.isNotEmpty &&
+           _familyPlans.isNotEmpty && 
            _religion.isNotEmpty && 
            _politics.isNotEmpty && 
            _money.isNotEmpty && 
@@ -32,6 +34,7 @@ class _ValuesScreenState extends State<ValuesScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       
       final values = Values(
+        relationshipType: _relationshipType,
         familyPlans: _familyPlans,
         religion: _religion,
         politics: _politics,
@@ -65,8 +68,24 @@ class _ValuesScreenState extends State<ValuesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileProgressIndicator(currentStep: 4, totalSteps: 7),
+            const ProfileProgressIndicator(currentStep: 4, totalSteps: 6),
             const SizedBox(height: 32),
+            
+            _buildSection(
+              'Ce fel de relație cauți? ❤️',
+              [
+                '💍 Căsătorie / Relație serioasă pe termen lung',
+                '❤️ Relație de iubire (fără presiune pentru căsătorie)',
+                '🤝 Prietenie / Cunoștințe / Discuții',
+                '😊 Relație casual / Fără angajament',
+                '🔥 Aventură / Relație ocazională',
+                '🎭 Relație deschisă / Non-monogamă',
+                '🤷 Încă nu știu / Deschis la posibilități',
+              ],
+              _relationshipType,
+              (value) => setState(() => _relationshipType = value),
+            ),
+            const SizedBox(height: 24),
             
             _buildSection(
               'Planuri de familie',

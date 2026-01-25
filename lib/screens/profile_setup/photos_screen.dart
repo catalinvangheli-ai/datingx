@@ -295,7 +295,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         'creativeAnalytical': profile?.personality?.conflictStyle,
         
         // Values
-        'relationshipType': profile?.intention?.relationshipGoal,
+        'relationshipType': profile?.values?.relationshipType,
         'wantsChildren': profile?.values?.familyPlans,
         'religionImportance': profile?.values?.religion,
         'politicalAlignment': profile?.values?.politics,

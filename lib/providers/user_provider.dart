@@ -168,8 +168,9 @@ class UserProvider extends ChangeNotifier {
       
       // Values
       Values? values;
-      if (profileData['wantsChildren'] != null || profileData['religionImportance'] != null) {
+      if (profileData['relationshipType'] != null || profileData['wantsChildren'] != null || profileData['religionImportance'] != null) {
         values = Values(
+          relationshipType: profileData['relationshipType'] ?? '',
           familyPlans: profileData['wantsChildren'] ?? '',
           religion: profileData['religionImportance'] ?? '',
           politics: profileData['politicalAlignment'] ?? '',
@@ -178,7 +179,7 @@ class UserProvider extends ChangeNotifier {
         );
       }
       
-      // Intention
+      // Intention (DEPRECATED - now part of Values)
       RelationshipIntention? intention;
       if (profileData['relationshipType'] != null) {
         intention = RelationshipIntention(

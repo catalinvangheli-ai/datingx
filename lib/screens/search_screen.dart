@@ -15,6 +15,7 @@ class _SearchScreenState extends State<SearchScreen> {
   // Criterii OBLIGATORII
   String? _searchGender;
   RangeValues _ageRange = const RangeValues(18, 65);
+  String? _searchRelationshipType; // OBLIGATORIU - tip relație căutată
 
   // Criterii OPȚIONALE
   String? _country;
@@ -25,7 +26,6 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _selectedInterests = [];
   String? _smokingPreference;
   String? _drinkingPreference;
-  String? _relationshipGoal;
 
   bool _isSearching = false;
   List<dynamic> _searchResults = [];
@@ -44,11 +44,14 @@ class _SearchScreenState extends State<SearchScreen> {
     'Beau ocazional',
     'Beau social'
   ];
-  final List<String> _relationshipGoals = [
-    'Relație serioasă',
-    'Prietenie',
-    'Ceva casual',
-    'Încă nu știu'
+  final List<String> _relationshipTypes = [
+    '💍 Căsătorie / Relație serioasă pe termen lung',
+    '❤️ Relație de iubire (fără presiune pentru căsătorie)',
+    '🤝 Prietenie / Cunoștințe / Discuții',
+    '😊 Relație casual / Fără angajament',
+    '🔥 Aventură / Relație ocazională',
+    '🎭 Relație deschisă / Non-monogamă',
+    '🤷 Încă nu știu / Deschis la posibilități',
   ];
   final List<String> _allInterests = [
     'Muzică',
@@ -64,9 +67,13 @@ class _SearchScreenState extends State<SearchScreen> {
   ];
 
   Future<void> _performSearch() async {
-    if (_searchGender == null) {
+    if (_searchGender == null || _searchRelationshipType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Te rog selectează genul persoanei căutate')),
+        SnackBar(content: Text(
+          _searchGender == null 
+            ? 'Te rog selectează genul persoanei căutate'
+            : 'Te rog selectează ce tip de relație cauți'
+        )),
       );
       return;
     }
@@ -79,6 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
         'gender': _searchGender,
         'minAge': _ageRange.start.round(),
         'maxAge': _ageRange.end.round(),
+        'relationshipType': _searchRelationshipType, // OBLIGATORIU
         if (_country != null && _country!.isNotEmpty) 'country': _country,
         if (_city != null && _city!.isNotEmpty) 'city': _city,
         if (_heightRange != null) ...{
@@ -91,7 +99,6 @@ class _SearchScreenState extends State<SearchScreen> {
         if (_selectedInterests.isNotEmpty) 'interests': _selectedInterests,
         if (_smokingPreference != null) 'smoking': _smokingPreference,
         if (_drinkingPreference != null) 'drinking': _drinkingPreference,
-        if (_relationshipGoal != null) 'relationshipGoal': _relationshipGoal,
       };
 
       // Apelează API-ul de căutare
@@ -241,6 +248,29 @@ class _SearchScreenState extends State<SearchScreen> {
                     _ageRange.end.round().toString(),
                   ),
                   onChanged: (values) => setState(() => _ageRange = values),
+                ),
+                const SizedBox(height: 16),
+
+                // Tip Relație - NOU OBLIGATORIU
+                const Text(
+                  'Ce tip de relație cauți?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _searchRelationshipType,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Selectează tipul de relație',
+                    helperText: '💡 Acest criteriu ajută la găsirea persoanelor compatibile',
+                  ),
+                  items: _relationshipTypes
+                      .map((type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(type, style: const TextStyle(fontSize: 14)),
+                          ))
+                      .toList(),
+                  onChanged: (value) => setState(() => _searchRelationshipType = value),
                 ),
               ],
             ),
@@ -404,24 +434,6 @@ class _SearchScreenState extends State<SearchScreen> {
                           .toList(),
                       onChanged: (value) =>
                           setState(() => _drinkingPreference = value),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Scop relație
-                    const Text('Scop Relație',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _relationshipGoal,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Orice scop',
-                      ),
-                      items: _relationshipGoals
-                          .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _relationshipGoal = value),
                     ),
                   ],
                 ),

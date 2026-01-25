@@ -133,6 +133,7 @@ class Personality {
 }
 
 class Values {
+  final String relationshipType;
   final String familyPlans;
   final String religion;
   final String politics;
@@ -140,6 +141,7 @@ class Values {
   final String careerAmbition;
 
   Values({
+    required this.relationshipType,
     required this.familyPlans,
     required this.religion,
     required this.politics,
@@ -148,7 +150,8 @@ class Values {
   });
 
   bool isComplete() {
-    return familyPlans.isNotEmpty && 
+    return relationshipType.isNotEmpty &&
+           familyPlans.isNotEmpty && 
            religion.isNotEmpty && 
            politics.isNotEmpty && 
            money.isNotEmpty && 
@@ -156,6 +159,7 @@ class Values {
   }
 
   Map<String, dynamic> toJson() => {
+    'relationshipType': relationshipType,
     'familyPlans': familyPlans,
     'religion': religion,
     'politics': politics,
@@ -164,6 +168,7 @@ class Values {
   };
 
   factory Values.fromJson(Map<String, dynamic> json) => Values(
+    relationshipType: json['relationshipType'] ?? '',
     familyPlans: json['familyPlans'] ?? '',
     religion: json['religion'] ?? '',
     politics: json['politics'] ?? '',
