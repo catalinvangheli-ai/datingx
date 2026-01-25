@@ -32,6 +32,15 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create or update profile
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    console.log('📥 Received profile data:', {
+      userId: req.userId,
+      relationshipType: req.body.relationshipType,
+      wantsChildren: req.body.wantsChildren,
+      name: req.body.name,
+      gender: req.body.gender,
+      profileComplete: req.body.profileComplete
+    });
+    
     const profileData = {
       userId: req.userId,
       ...req.body,
@@ -52,6 +61,12 @@ router.post('/', authMiddleware, async (req, res) => {
       profileData,
       { new: true, upsert: true }
     );
+    
+    console.log('✅ Profile saved:', {
+      userId: profile.userId,
+      relationshipType: profile.relationshipType,
+      profileComplete: profile.profileComplete
+    });
     
     res.json({
       success: true,

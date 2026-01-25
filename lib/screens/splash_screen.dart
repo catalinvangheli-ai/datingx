@@ -36,8 +36,11 @@ class _SplashScreenState extends State<SplashScreen> {
         final profileData = await authProvider.loadUserProfileFromServer();
         if (profileData != null) {
           print('📥 Profile data received: ${profileData.keys}');
+          print('🔍 relationshipType in data: ${profileData['relationshipType']}');
+          print('🔍 wantsChildren in data: ${profileData['wantsChildren']}');
           userProvider.loadUserProfileFromServer(profileData);
           print('✅ Profile loaded. Completion: ${userProvider.getCompletionPercentage()}%');
+          print('🔍 relationshipType after load: ${userProvider.currentUser?.values?.relationshipType}');
         } else {
           print('⚠️ No profile found on server');
         }

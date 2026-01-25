@@ -271,34 +271,41 @@ class _PhotosScreenState extends State<PhotosScreen> {
       
       // Construim datele complete ale profilului pentru salvare
       final profile = userProvider.currentUser;
+      
+      print('🔍 DEBUG - Profile values:');
+      print('  relationshipType: ${profile?.values?.relationshipType}');
+      print('  familyPlans: ${profile?.values?.familyPlans}');
+      print('  religion: ${profile?.values?.religion}');
+      print('  politics: ${profile?.values?.politics}');
+      
       final profileData = {
         'userId': authProvider.currentAuthUser?.id,
         // Basic Identity
-        'name': profile?.basicIdentity?.name,
-        'age': profile?.basicIdentity?.age,
-        'gender': profile?.basicIdentity?.gender,
-        'country': profile?.basicIdentity?.country,
-        'city': profile?.basicIdentity?.city,
-        'occupation': profile?.basicIdentity?.occupation,
-        'phoneNumber': profile?.basicIdentity?.phoneNumber,
+        'name': profile?.basicIdentity?.name ?? '',
+        'age': profile?.basicIdentity?.age ?? 18,
+        'gender': profile?.basicIdentity?.gender ?? '',
+        'country': profile?.basicIdentity?.country ?? '',
+        'city': profile?.basicIdentity?.city ?? '',
+        'occupation': profile?.basicIdentity?.occupation ?? '',
+        'phoneNumber': profile?.basicIdentity?.phoneNumber ?? '',
         
         // Lifestyle
-        'smokingHabit': profile?.lifestyle?.smoking,
-        'drinkingHabit': profile?.lifestyle?.alcohol,
-        'fitnessLevel': profile?.lifestyle?.exercise,
-        'diet': profile?.lifestyle?.diet,
-        'petPreference': profile?.lifestyle?.pets,
+        'smokingHabit': profile?.lifestyle?.smoking ?? '',
+        'drinkingHabit': profile?.lifestyle?.alcohol ?? '',
+        'fitnessLevel': profile?.lifestyle?.exercise ?? '',
+        'diet': profile?.lifestyle?.diet ?? '',
+        'petPreference': profile?.lifestyle?.pets ?? '',
         
         // Personality
-        'introvertExtrovert': profile?.personality?.socialType,
-        'spontaneousPlanned': profile?.personality?.emotionalPace,
-        'creativeAnalytical': profile?.personality?.conflictStyle,
+        'introvertExtrovert': profile?.personality?.socialType ?? '',
+        'spontaneousPlanned': profile?.personality?.emotionalPace ?? '',
+        'creativeAnalytical': profile?.personality?.conflictStyle ?? '',
         
         // Values
-        'relationshipType': profile?.values?.relationshipType,
-        'wantsChildren': profile?.values?.familyPlans,
-        'religionImportance': profile?.values?.religion,
-        'politicalAlignment': profile?.values?.politics,
+        'relationshipType': profile?.values?.relationshipType ?? '',
+        'wantsChildren': profile?.values?.familyPlans ?? '',
+        'religionImportance': profile?.values?.religion ?? '',
+        'politicalAlignment': profile?.values?.politics ?? '',
         
         // Interests
         'interests': profile?.interests?.hobbies,
@@ -329,10 +336,16 @@ class _PhotosScreenState extends State<PhotosScreen> {
       if (response['success'] == true) {
         print('🔄 Reîncărcăm profilul de pe server...');
         final savedProfileData = await authProvider.loadUserProfileFromServer();
+        print('📥 Profile data from server: ${savedProfileData?.toString()}');
         if (savedProfileData != null) {
           userProvider.loadUserProfileFromServer(savedProfileData);
           print('✅ Profil reîncărcat cu succes! Completion: ${userProvider.getCompletionPercentage()}%');
+          print('🔍 Relationship Type după reload: ${userProvider.currentUser?.values?.relationshipType}');
+        } else {
+          print('❌ EROARE: Nu am putut reîncărca profilul de pe server!');
         }
+      } else {
+        print('❌ EROARE: Răspuns de la server fără success=true: $response');
       }
       
       if (context.mounted) {
@@ -401,6 +414,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         type: FileType.image,
         allowMultiple: false,
         withData: true, // Important pentru web - încarcă bytes
+        allowCompression: false, // NU salvează în galerie
       );
       
       if (result != null && result.files.isNotEmpty) {
