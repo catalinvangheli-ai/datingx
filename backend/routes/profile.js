@@ -41,24 +41,27 @@ router.post('/', authMiddleware, async (req, res) => {
       profileComplete: req.body.profileComplete
     });
     
-    const profileData = {
-      userId: req.userId,
+    // Prepare update data - folosim $set pentru a face merge, nu replace
+    const updateData = {
       ...req.body,
       lastUpdated: new Date()
     };
     
-    // Check if all required fields are present
+    // Check if all required fields are present pentru a seta profileComplete
     const requiredFields = ['name', 'age', 'gender', 'country'];
-    const hasAllFields = requiredFields.every(field => profileData[field]);
+    const hasAllFields = requiredFields.every(field => updateData[field] || req.body[field]);
     
     if (hasAllFields) {
-      profileData.profileComplete = true;
+      updateData.profileComplete = true;
     }
     
-    // Update or create profile
+    // Update or create profile - folosim $set pentru merge
     const profile = await Profile.findOneAndUpdate(
       { userId: req.userId },
-      profileData,
+      { 
+        $set: updateData,  // Folosim $set pentru a face merge nu replace
+        $setOnInsert: { userId: req.userId }  // Setăm userId doar la create
+      },
       { new: true, upsert: true }
     );
     
