@@ -83,6 +83,44 @@ router.post('/upload', authMiddleware, upload.single('photo'), async (req, res) 
   }
 });
 
+// Delete ALL photos (pentru a posta anunț nou)
+router.delete('/all', authMiddleware, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ userId: req.userId });
+    
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil negăsit.'
+      });
+    }
+    
+    // Delete all photos from Cloudinary
+    for (const photo of profile.photos) {
+      try {
+        await deleteImage(photo.cloudinaryId);
+      } catch (error) {
+        console.error(`Failed to delete ${photo.cloudinaryId}:`, error);
+      }
+    }
+    
+    // Clear photos array
+    profile.photos = [];
+    await profile.save();
+    
+    res.json({
+      success: true,
+      message: `${profile.photos.length} fotografii șterse cu succes.`
+    });
+  } catch (error) {
+    console.error('Delete all photos error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare la ștergerea fotografiilor.'
+    });
+  }
+});
+
 // Delete photo
 router.delete('/:cloudinaryId', authMiddleware, async (req, res) => {
   try {

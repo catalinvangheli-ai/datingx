@@ -80,11 +80,20 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> saveProfile(Map<String, dynamic> profileData) async {
+    print('🌐 ApiService.saveProfile called');
+    print('  URL: ${ApiConfig.baseUrl}${ApiConfig.profile}');
+    print('  Token: ${_token != null ? "EXISTS (${_token!.substring(0, 10)}...)" : "NULL"}');
+    print('  Data keys: ${profileData.keys.toList()}');
+    print('  userId: ${profileData['userId']}');
+    
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}${ApiConfig.profile}'),
       headers: _getHeaders(),
       body: jsonEncode(profileData),
     );
+    
+    print('  Response status: ${response.statusCode}');
+    print('  Response body: ${response.body}');
     
     return _handleResponse(response);
   }
@@ -146,6 +155,15 @@ class ApiService {
   static Future<Map<String, dynamic>> deletePhoto(String cloudinaryId) async {
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}${ApiConfig.photoDelete(cloudinaryId)}'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> deleteAllPhotos() async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/photo/all'),
       headers: _getHeaders(),
     );
     
