@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const photoRoutes = require('./routes/photo');
+const adsRoutes = require('./routes/ads');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/photo', photoRoutes);
+app.use('/api/ads', adsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
