@@ -185,7 +185,7 @@ router.post('/search', async (req, res) => {
 
     res.json({
       success: true,
-      results,
+      ads: results,
       count: results.length
     });
   } catch (error) {
