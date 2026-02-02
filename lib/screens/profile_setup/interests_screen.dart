@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_profile.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/progress_indicator_widget.dart';
-import 'photos_screen.dart';
+import '../../services/api_service.dart';
+import '../main_screen.dart';
 
 class InterestsScreen extends StatefulWidget {
   const InterestsScreen({super.key});
@@ -56,10 +58,23 @@ class _InterestsScreenState extends State<InterestsScreen> {
            _selectedTravel.isNotEmpty;
   }
 
-  void _saveAndContinue() {
-    if (_canContinue()) {
+  bool _isSaving = false;
+
+  Future<void> _saveProfile() async {
+    if (!_canContinue()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selectează minim 3 hobby-uri, gen muzical și atitudine călătorii'))
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
+      // Salvăm interests
       final interests = Interests(
         hobbies: _selectedHobbies.toList(),
         musicTaste: _selectedMusic.toList(),
@@ -67,13 +82,102 @@ class _InterestsScreenState extends State<InterestsScreen> {
       );
       
       userProvider.updateInterests(interests);
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PhotosScreen())
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selectează minim 3 hobby-uri, gen muzical și atitudine călătorii'))
-      );
+      
+      print('🔍 InterestsScreen - Salvat interests');
+      print('🔍 Relationship type: ${userProvider.currentUser?.values?.relationshipType}');
+      
+      // Salvăm profilul pe server
+      final profile = userProvider.currentUser;
+      final profileData = {
+        'userId': authProvider.currentAuthUser?.id,
+        // Basic Identity
+        'name': profile?.basicIdentity?.name ?? '',
+        'age': profile?.basicIdentity?.age ?? 18,
+        'gender': profile?.basicIdentity?.gender ?? '',
+        'country': profile?.basicIdentity?.country ?? '',
+        'city': profile?.basicIdentity?.city ?? '',
+        'height': profile?.basicIdentity?.height ?? 170,
+        'occupation': profile?.basicIdentity?.occupation ?? '',
+        'phoneNumber': profile?.basicIdentity?.phoneNumber ?? '',
+        
+        // Lifestyle
+        'schedule': profile?.lifestyle?.schedule ?? '',
+        'smokingHabit': profile?.lifestyle?.smoking ?? '',
+        'drinkingHabit': profile?.lifestyle?.alcohol ?? '',
+        'fitnessLevel': profile?.lifestyle?.exercise ?? '',
+        'diet': profile?.lifestyle?.diet ?? '',
+        'petPreference': profile?.lifestyle?.pets ?? '',
+        
+        // Personality
+        'introvertExtrovert': profile?.personality?.socialType ?? '',
+        'spontaneousPlanned': profile?.personality?.emotionalPace ?? '',
+        'creativeAnalytical': profile?.personality?.conflictStyle ?? '',
+        'personalSpace': profile?.personality?.personalSpace ?? '',
+        
+        // Values
+        'relationshipType': profile?.values?.relationshipType ?? '',
+        'wantsChildren': profile?.values?.familyPlans ?? '',
+        'religionImportance': profile?.values?.religion ?? '',
+        'politicalAlignment': profile?.values?.politics ?? '',
+        'moneyManagement': profile?.values?.money ?? '',
+        'careerAmbition': profile?.values?.careerAmbition ?? '',
+        
+        // Interests
+        'interests': profile?.interests?.hobbies ?? [],
+        'musicTaste': profile?.interests?.musicTaste ?? [],
+        'travelAttitude': profile?.interests?.travelAttitude ?? '',
+        
+        // Metadata
+        'profileComplete': false, // Nu e anunț, doar profil
+      };
+      
+      print('📤 Salvăm profilul...');
+      final response = await ApiService.saveProfile(profileData);
+      
+      if (response['success'] != true) {
+        throw Exception('Salvarea a eșuat: ${response['message']}');
+      }
+      
+      print('✅ Profil salvat cu succes!');
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '✅ Detaliile profilului au fost salvate!',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Revenim la ecranul anterior (AdPostingScreen sau MainScreen)
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      print('❌ Eroare la salvarea profilului: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Eroare la salvare: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -92,7 +196,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileProgressIndicator(currentStep: 5, totalSteps: 7),
+            const ProfileProgressIndicator(currentStep: 6, totalSteps: 6),
             const SizedBox(height: 32),
             
             Text(
@@ -189,13 +293,22 @@ class _InterestsScreenState extends State<InterestsScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: _canContinue() ? _saveAndContinue : null,
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Continuă'),
+                    onPressed: _isSaving ? null : _saveProfile,
+                    icon: _isSaving 
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.save),
+                    label: Text(_isSaving ? 'Se salvează...' : 'Salvează Profilul'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: _canContinue() ? Colors.red : null,
-                      foregroundColor: _canContinue() ? Colors.white : null,
+                      backgroundColor: _canContinue() && !_isSaving ? const Color(0xFFE91E63) : null,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),

@@ -4,17 +4,48 @@ import 'package:provider/provider.dart';
 import '../models/user_profile.dart';
 import '../providers/user_provider.dart';
 import '../providers/auth_provider.dart';
+import 'profile_setup/relationship_type_screen.dart';
 import 'profile_setup/basic_identity_screen.dart';
 import 'profile_setup/lifestyle_screen.dart';
 import 'profile_setup/personality_screen.dart';
 import 'profile_setup/values_screen.dart';
 import 'profile_setup/interests_screen.dart';
-import 'profile_setup/photos_screen.dart';
-import 'profile_setup/partner_criteria_screen.dart';
 import 'login_screen.dart';
 
-class EditProfileScreen extends StatelessWidget {
+class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileFromServer();
+  }
+
+  Future<void> _loadProfileFromServer() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (!authProvider.isAuthenticated) {
+      return;
+    }
+    
+    try {
+      print('🔄 EditProfileScreen - Încărcăm profilul de pe server...');
+      final profileData = await authProvider.loadUserProfileFromServer();
+      if (profileData != null) {
+        userProvider.loadUserProfileFromServer(profileData);
+        setState(() {}); // Forțează rebuild pentru a arăta datele
+        print('✅ EditProfileScreen - Profil încărcat! Completion: ${userProvider.getCompletionPercentage()}%');
+      }
+    } catch (e) {
+      print('❌ EditProfileScreen - Eroare: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +136,17 @@ class EditProfileScreen extends StatelessWidget {
                   
                   _buildEditSection(
                     context,
+                    'Tipul de relație',
+                    profile.values?.relationshipType.isNotEmpty ?? false,
+                    Icons.favorite_border,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RelationshipTypeScreen()),
+                    ),
+                  ),
+                  
+                  _buildEditSection(
+                    context,
                     'Identitate',
                     profile.basicIdentity?.isComplete() ?? false,
                     Icons.person,
@@ -155,28 +197,6 @@ class EditProfileScreen extends StatelessWidget {
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const InterestsScreen()),
-                    ),
-                  ),
-                  
-                  _buildEditSection(
-                    context,
-                    'Fotografii și Bio',
-                    profile.photos?.isComplete() ?? false,
-                    Icons.photo_camera,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PhotosScreen()),
-                    ),
-                  ),
-                  
-                  _buildEditSection(
-                    context,
-                    'Criterii Partener',
-                    profile.partnerCriteria?.isComplete() ?? false,
-                    Icons.search,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PartnerCriteriaScreen()),
                     ),
                   ),
                   

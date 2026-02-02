@@ -43,6 +43,10 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
       );
       
       userProvider.updateLifestyle(lifestyle);
+      
+      print('🔍 LifestyleScreen - Salvat lifestyle');
+      print('🔍 Relationship type: ${userProvider.currentUser?.values?.relationshipType}');
+      
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const PersonalityScreen())
       );
@@ -68,7 +72,7 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileProgressIndicator(currentStep: 2, totalSteps: 7),
+            const ProfileProgressIndicator(currentStep: 3, totalSteps: 6),
             const SizedBox(height: 32),
             _buildSection('Program', ['program flexibil', 'program fix 9-5', 'ture de noapte'], _schedule, (value) => setState(() => _schedule = value)),
             const SizedBox(height: 24),

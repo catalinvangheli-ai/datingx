@@ -310,9 +310,9 @@ class PartnerCriteria {
   });
 
   bool isComplete() {
-    return ageRange.isNotEmpty && 
-           maxDistance > 0 && 
-           (dealBreakers.isNotEmpty || mustHaves.isNotEmpty);
+    // ageRange și maxDistance se aleg la căutare, nu la profil
+    // Profilul e complet dacă are măcar un criteriu
+    return dealBreakers.isNotEmpty || mustHaves.isNotEmpty;
   }
 
   Map<String, dynamic> toJson() => {
@@ -365,7 +365,7 @@ class UserProfile {
 
   int completionPercentage() {
     int completed = 0;
-    int total = 7;
+    int total = 6; // Am eliminat partnerCriteria - se alege la căutare
 
     if (basicIdentity?.isComplete() ?? false) completed++;
     if (lifestyle?.isComplete() ?? false) completed++;
@@ -373,7 +373,7 @@ class UserProfile {
     if (values?.isComplete() ?? false) completed++;
     if (interests?.isComplete() ?? false) completed++;
     if (photos?.isComplete() ?? false) completed++;
-    if (partnerCriteria?.isComplete() ?? false) completed++;
+    // partnerCriteria nu mai e necesar pentru completare
 
     return ((completed / total) * 100).round();
   }

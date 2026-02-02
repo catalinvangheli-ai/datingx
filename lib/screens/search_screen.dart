@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
-import 'profile_detail_screen.dart';
+import 'ad_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -20,30 +20,13 @@ class _SearchScreenState extends State<SearchScreen> {
   // Criterii OPȚIONALE
   String? _country;
   String? _city;
-  RangeValues? _heightRange;
-  String? _education;
-  String? _occupation;
   List<String> _selectedInterests = [];
-  String? _smokingPreference;
-  String? _drinkingPreference;
 
   bool _isSearching = false;
   List<dynamic> _searchResults = [];
+  bool _showAdvancedSearch = false;
 
   final List<String> _genders = ['Bărbat', 'Femeie', 'Non-binar'];
-  final List<String> _educationLevels = [
-    'Liceu',
-    'Facultate',
-    'Masterat',
-    'Doctorat',
-    'Altele'
-  ];
-  final List<String> _smokingOptions = ['Nu fumez', 'Fumez ocazional', 'Fumez'];
-  final List<String> _drinkingOptions = [
-    'Nu beau',
-    'Beau ocazional',
-    'Beau social'
-  ];
   final List<String> _relationshipTypes = [
     '💍 Căsătorie / Relație serioasă pe termen lung',
     '❤️ Relație de iubire (fără presiune pentru căsătorie)',
@@ -89,30 +72,21 @@ class _SearchScreenState extends State<SearchScreen> {
         'relationshipType': _searchRelationshipType, // OBLIGATORIU
         if (_country != null && _country!.isNotEmpty) 'country': _country,
         if (_city != null && _city!.isNotEmpty) 'city': _city,
-        if (_heightRange != null) ...{
-          'minHeight': _heightRange!.start.round(),
-          'maxHeight': _heightRange!.end.round(),
-        },
-        if (_education != null) 'education': _education,
-        if (_occupation != null && _occupation!.isNotEmpty)
-          'occupation': _occupation,
         if (_selectedInterests.isNotEmpty) 'interests': _selectedInterests,
-        if (_smokingPreference != null) 'smoking': _smokingPreference,
-        if (_drinkingPreference != null) 'drinking': _drinkingPreference,
       };
 
       // Apelează API-ul de căutare
-      final response = await ApiService.searchProfiles(searchCriteria);
+      final response = await ApiService.searchAds(searchCriteria);
 
       if (response['success'] == true) {
         setState(() {
-          _searchResults = response['results'] ?? [];
+          _searchResults = response['ads'] ?? [];
         });
 
         if (_searchResults.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Nu există profiluri care se potrivesc criteriilor tale. Încearcă criterii mai largi!'),
+              content: Text('Nu există anunțuri care se potrivesc criteriilor tale. Încearcă criterii mai largi!'),
               duration: Duration(seconds: 4),
             ),
           );
@@ -278,168 +252,101 @@ class _SearchScreenState extends State<SearchScreen> {
 
           const SizedBox(height: 24),
 
-          // SECȚIUNE OPȚIONALĂ
-          ExpansionTile(
-            title: const Text('Criterii Opționale (pentru căutare detaliată)',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            initiallyExpanded: false,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Locație
-                    const Text('Țara',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'ex: România',
-                      ),
-                      onChanged: (value) => _country = value,
-                    ),
-                    const SizedBox(height: 16),
-
-                    const Text('Orașul',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'ex: București',
-                      ),
-                      onChanged: (value) => _city = value,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Înălțime
-                    const Text('Înălțime (opțional)',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: Text(_heightRange == null
-                          ? 'Adaugă filtru înălțime'
-                          : '${_heightRange!.start.round()} - ${_heightRange!.end.round()} cm'),
-                      value: _heightRange != null,
-                      onChanged: (value) {
-                        setState(() {
-                          _heightRange =
-                              value ? const RangeValues(150, 200) : null;
-                        });
-                      },
-                    ),
-                    if (_heightRange != null)
-                      RangeSlider(
-                        values: _heightRange!,
-                        min: 140,
-                        max: 220,
-                        divisions: 80,
-                        labels: RangeLabels(
-                          '${_heightRange!.start.round()} cm',
-                          '${_heightRange!.end.round()} cm',
-                        ),
-                        onChanged: (values) =>
-                            setState(() => _heightRange = values),
-                      ),
-                    const SizedBox(height: 16),
-
-                    // Educație
-                    const Text('Educație',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _education,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Orice nivel',
-                      ),
-                      items: _educationLevels
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                          .toList(),
-                      onChanged: (value) => setState(() => _education = value),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Ocupație
-                    const Text('Ocupație',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'ex: Inginer, Doctor, Artist',
-                      ),
-                      onChanged: (value) => _occupation = value,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Interese
-                    const Text('Interese Comune',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: _allInterests.map((interest) {
-                        final isSelected =
-                            _selectedInterests.contains(interest);
-                        return FilterChip(
-                          label: Text(interest),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedInterests.add(interest);
-                              } else {
-                                _selectedInterests.remove(interest);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Fumat
-                    const Text('Fumat',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _smokingPreference,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Orice preferință',
-                      ),
-                      items: _smokingOptions
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _smokingPreference = value),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Băut
-                    const Text('Băut',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _drinkingPreference,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Orice preferință',
-                      ),
-                      items: _drinkingOptions
-                          .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _drinkingPreference = value),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          // Buton Căutare Detaliată
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() => _showAdvancedSearch = !_showAdvancedSearch);
+            },
+            icon: Icon(_showAdvancedSearch ? Icons.expand_less : Icons.expand_more),
+            label: Text(_showAdvancedSearch ? 'Ascunde Căutare Detaliată' : '+ Căutare Detaliată (opțional)'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: const BorderSide(color: Color(0xFFE91E63)),
+              foregroundColor: const Color(0xFFE91E63),
+            ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Filtrează după țară, oraș, interese comune',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+
+          // SECȚIUNE OPȚIONALĂ (afișată doar dacă _showAdvancedSearch == true)
+          if (_showAdvancedSearch)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Criterii Opționale',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Locație
+                  const Text('Țara',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'ex: România',
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (value) => _country = value,
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Text('Orașul',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'ex: București',
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (value) => _city = value,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Interese
+                  const Text('Interese Comune',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: _allInterests.map((interest) {
+                      final isSelected =
+                          _selectedInterests.contains(interest);
+                      return FilterChip(
+                        label: Text(interest),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedInterests.add(interest);
+                            } else {
+                              _selectedInterests.remove(interest);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
 
           const SizedBox(height: 32),
 
@@ -501,43 +408,70 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: _searchResults.length,
             itemBuilder: (context, index) {
-              final profile = _searchResults[index];
+              final ad = _searchResults[index];
+              final photos = (ad['photos'] as List?)?.map((p) => p['url'] as String).toList() ?? [];
+              
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.pink[100],
-                    child: Text(
-                      profile['name']?.substring(0, 1).toUpperCase() ?? '?',
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink[700]),
-                    ),
-                  ),
+                  leading: photos.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            photos.first,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return CircleAvatar(
+                                radius: 30,
+                                backgroundColor: Colors.pink[100],
+                                child: Text(
+                                  ad['name']?.substring(0, 1).toUpperCase() ?? '?',
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink[700]),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.pink[100],
+                          child: Text(
+                            ad['name']?.substring(0, 1).toUpperCase() ?? '?',
+                            style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.pink[700]),
+                          ),
+                        ),
                   title: Text(
-                    profile['name'] ?? 'Anonim',
+                    ad['title'] ?? ad['name'] ?? 'Anonim',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${profile['age']} ani, ${profile['gender']}'),
-                      if (profile['city'] != null)
-                        Text('📍 ${profile['city']}, ${profile['country']}'),
-                      if (profile['occupation'] != null)
-                        Text('💼 ${profile['occupation']}'),
+                      Text('${ad['name']} • ${ad['age']} ani, ${ad['gender']}'),
+                      if (ad['city'] != null)
+                        Text('📍 ${ad['city']}, ${ad['country']}'),
+                      if (ad['relationshipType'] != null)
+                        Text('💝 ${ad['relationshipType']}', 
+                            maxLines: 1, 
+                            overflow: TextOverflow.ellipsis),
                     ],
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    // Navighează la ecranul de detalii profil
+                    // Navighează la ecranul de detalii anunț
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            ProfileDetailScreen(profileData: profile),
+                            AdDetailScreen(adId: ad['_id']),
                       ),
                     );
                   },

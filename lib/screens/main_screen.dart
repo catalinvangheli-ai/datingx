@@ -6,6 +6,9 @@ import '../services/api_service.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 import 'search_screen.dart';
+import 'ad_posting_screen.dart';
+import 'photo_gallery_screen.dart';
+import 'ad_detail_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,38 +19,55 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  List<String> _photoUrls = [];
-  bool _isLoadingPhotos = false;
+  List<dynamic> _myAds = [];
+  bool _isLoadingAds = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPhotosFromServer();
+    _loadProfileFromServer();
+    _loadMyAds();
   }
 
-  Future<void> _loadPhotosFromServer() async {
-    // Verificăm dacă utilizatorul este autentificat înainte de a încărca fotografiile
+  Future<void> _loadProfileFromServer() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
     if (!authProvider.isAuthenticated) {
-      // Utilizatorul nu e autentificat, nu încărcăm fotografii
       return;
     }
     
-    setState(() => _isLoadingPhotos = true);
     try {
-      final response = await ApiService.getProfile();
-      if (response['success'] == true && response['profile'] != null) {
-        final photos = response['profile']['photos'] as List<dynamic>?;
-        if (photos != null) {
-          setState(() {
-            _photoUrls = photos.map((p) => p['url'] as String).toList();
-          });
-        }
+      print('🔄 MainScreen - Încărcăm profilul de pe server...');
+      final profileData = await authProvider.loadUserProfileFromServer();
+      if (profileData != null) {
+        userProvider.loadUserProfileFromServer(profileData);
+        print('✅ MainScreen - Profil încărcat! Completion: ${userProvider.getCompletionPercentage()}%');
+        print('🔍 MainScreen - relationshipType: ${userProvider.currentUser?.values?.relationshipType}');
       }
     } catch (e) {
-      print('Error loading photos: $e');
+      print('❌ MainScreen - Eroare la încărcarea profilului: $e');
+    }
+  }
+
+  Future<void> _loadMyAds() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      return;
+    }
+    
+    setState(() => _isLoadingAds = true);
+    try {
+      final response = await ApiService.getMyAds();
+      if (response['success'] == true && response['ads'] != null) {
+        setState(() {
+          _myAds = response['ads'];
+        });
+      }
+    } catch (e) {
+      print('Error loading ads: $e');
     } finally {
-      setState(() => _isLoadingPhotos = false);
+      setState(() => _isLoadingAds = false);
     }
   }
 
@@ -109,30 +129,19 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final completionPercentage = userProvider.getCompletionPercentage();
-    final isVisible = userProvider.isProfileVisible();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('DatingX'),
         actions: [
-          if (completionPercentage >= 80)
-            IconButton(
-              icon: const Icon(Icons.search_rounded),
-              tooltip: 'Caută Pereche',
-              onPressed: _searchForMatch,
-            ),
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Caută Pereche',
+            onPressed: _searchForMatch,
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: _logout,
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Text('Profil: $completionPercentage%', style: const TextStyle(fontSize: 14)),
-            ),
           ),
         ],
       ),
@@ -227,10 +236,10 @@ class _MainScreenState extends State<MainScreen> {
                 onPressed: () {
                   final authProvider = Provider.of<AuthProvider>(context, listen: false);
                   if (authProvider.isAuthenticated) {
-                    // Dacă e logat, du-l la completare profil
+                    // Dacă e logat, du-l la postare anunț
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      MaterialPageRoute(builder: (context) => const AdPostingScreen()),
                     );
                   } else {
                     // Dacă nu e logat, du-l la login
@@ -258,11 +267,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildProfileTab() {
-    final userProvider = Provider.of<UserProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    final user = userProvider.currentUser;
     final isLoggedIn = authProvider.isAuthenticated;
-    final completionPercentage = userProvider.getCompletionPercentage();
 
     // Dacă nu e logat, arată opțiuni de login/register
     if (!isLoggedIn) {
@@ -275,13 +281,13 @@ class _MainScreenState extends State<MainScreen> {
               Icon(Icons.account_circle, size: 100, color: Colors.pink[200]),
               SizedBox(height: 24),
               Text(
-                'Creează un Profil',
+                'Creează un Cont',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
               Text(
-                'Conectează-te sau creează un cont pentru a-ți completa profilul și a fi vizibil în căutări!',
+                'Conectează-te pentru a posta anunțuri și a vizualiza anunțurile tale!',
                 style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
@@ -311,182 +317,293 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    // Dacă e logat dar profilul e incomplet, arată buton pentru completare
-    if (completionPercentage < 80) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.assignment, size: 100, color: Colors.orange[300]),
-              SizedBox(height: 24),
-              Text(
-                'Completează-ți Profilul',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Pentru a fi vizibil în căutări și a găsi perechea perfectă, completează-ți profilul!',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
-              LinearProgressIndicator(
-                value: completionPercentage / 100,
-                backgroundColor: Colors.grey[200],
-                color: Colors.orange,
-                minHeight: 8,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Progres: $completionPercentage%',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange[700]),
-              ),
-              SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                    );
-                    _loadPhotosFromServer();
-                  },
-                  icon: Icon(Icons.edit, size: 24),
-                  label: Text('Completează Profilul', style: TextStyle(fontSize: 18)),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Dacă profilul e complet, arată profilul normal
+    // Dacă e logat, arată anunțurile lui
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Profilul Meu', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
+              Text(
+                'Anunțurile Mele',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
                 onPressed: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen()));
-                  _loadPhotosFromServer();
+                  await authProvider.logout();
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
-                icon: Icon(Icons.edit),
-                label: Text('Editare'),
+                icon: Icon(Icons.logout),
+                tooltip: 'Delogare',
               ),
             ],
           ),
+          SizedBox(height: 16),
+
+          // Email utilizator
+          Card(
+            color: Colors.pink[50],
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(Icons.person, color: Colors.pink[700]),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      authProvider.currentAuthUser?.email ?? 'Utilizator',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           SizedBox(height: 24),
           
-          if (_photoUrls.isNotEmpty) ...[
-            Text('Fotografii', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
-            SizedBox(
-              height: 120,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _photoUrls.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        _photoUrls[index],
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 120,
-                            height: 120,
-                            color: Colors.grey[300],
-                            child: Icon(Icons.error),
-                          );
-                        },
+          if (_myAds.isNotEmpty) ...[
+            Text('${_myAds.length} ${_myAds.length == 1 ? 'anunț postat' : 'anunțuri postate'}', 
+                 style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            SizedBox(height: 16),
+            
+            // Listă cu anunțuri
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: _myAds.length,
+              itemBuilder: (context, index) {
+                final ad = _myAds[index];
+                final photos = (ad['photos'] as List?)?.map((p) => p['url'] as String).toList() ?? [];
+                
+                return Card(
+                  margin: EdgeInsets.only(bottom: 16),
+                  elevation: 2,
+                  child: InkWell(
+                    onTap: () {
+                      // Deschide pagina cu detalii anunț
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AdDetailScreen(adId: ad['_id']),
+                        ),
+                      ).then((_) => _loadMyAds()); // Reload după ce se întoarce
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          // Prima poză ca thumbnail
+                          if (photos.isNotEmpty)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                photos.first,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.error),
+                                  );
+                                },
+                              ),
+                            )
+                          else
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.photo, color: Colors.grey[400], size: 40),
+                            ),
+                          
+                          SizedBox(width: 16),
+                          
+                          // Detalii anunț
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ad['title'] ?? 'Anunț fără titlu',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '${ad['name']}, ${ad['age']} ani',
+                                      style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.photo_library_outlined, size: 16, color: Colors.grey[600]),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '${photos.length} ${photos.length == 1 ? 'fotografie' : 'fotografii'}',
+                                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
+            
             SizedBox(height: 24),
-          ] else if (_isLoadingPhotos) ...[
+          ] else if (_isLoadingAds) ...[
             Center(child: CircularProgressIndicator()),
             SizedBox(height: 24),
-          ],
-          
-          if (user?.basicIdentity != null) ...[
+          ] else ...[
             Card(
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(32.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Identitate', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 12),
-                    Text('Gen: ${user!.basicIdentity!.gender}'),
-                    Text('Vârstă: ${user.basicIdentity!.age} ani'),
-                    Text('Oraș: ${user.basicIdentity!.city}'),
-                    Text('Înălțime: ${user.basicIdentity!.height} cm'),
-                    Text('Ocupație: ${user.basicIdentity!.occupation}'),
+                    Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Nu ai anunțuri postate încă',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Postează primul tău anunț pentru a găsi perechea perfectă!',
+                      style: TextStyle(color: Colors.grey[600]),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
             ),
-          ],
-          if (user?.lifestyle != null) ...[
-            SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Stil de Viață', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 12),
-                    Text('Program: ${user!.lifestyle!.schedule}'),
-                    Text('Fumat: ${user.lifestyle!.smoking}'),
-                    Text('Alcool: ${user.lifestyle!.alcohol}'),
-                    Text('Exerciții: ${user.lifestyle!.exercise}'),
-                    Text('Dietă: ${user.lifestyle!.diet}'),
-                    Text('Animale: ${user.lifestyle!.pets}'),
-                  ],
-                ),
-              ),
-            ),
+            SizedBox(height: 24),
           ],
           
-          SizedBox(height: 32),
-          
+          // Buton postare anunț
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _searchForMatch,
-              icon: Icon(Icons.favorite),
-              label: Text('Caută Perechea Potrivită'),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdPostingScreen()),
+                );
+                
+                // Dacă anunțul a fost postat cu succes, reîncarcă lista
+                if (result == true) {
+                  await _loadMyAds();
+                  print('🔄 Anunțurile au fost reîncărcate');
+                }
+              },
+              icon: Icon(Icons.add_circle_outline),
+              label: Text('Postează Anunț Nou'),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: Colors.pink,
                 foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
+          
           SizedBox(height: 16),
+          
+          // Buton căutare
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _searchForMatch,
+              icon: Icon(Icons.search),
+              label: Text('Caută Perechea Potrivită'),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                foregroundColor: Colors.pink,
+                side: BorderSide(color: Colors.pink),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsTab() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Setări',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 24),
+          
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.person),
+              title: Text(authProvider.currentAuthUser?.email ?? 'Nu ești conectat'),
+              subtitle: Text('Email cont'),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await authProvider.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+              icon: Icon(Icons.logout),
+              label: Text('Delogare'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -496,6 +613,7 @@ class _MainScreenState extends State<MainScreen> {
               style: OutlinedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 foregroundColor: Colors.red,
+                side: BorderSide(color: Colors.red),
               ),
             ),
           ),

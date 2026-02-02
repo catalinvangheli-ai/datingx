@@ -37,6 +37,10 @@ class _PersonalityScreenState extends State<PersonalityScreen> {
       );
       
       userProvider.updatePersonality(personality);
+      
+      print('🔍 PersonalityScreen - Salvat personality');
+      print('🔍 Relationship type: ${userProvider.currentUser?.values?.relationshipType}');
+      
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ValuesScreen())
       );
@@ -62,7 +66,7 @@ class _PersonalityScreenState extends State<PersonalityScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileProgressIndicator(currentStep: 3, totalSteps: 7),
+            const ProfileProgressIndicator(currentStep: 4, totalSteps: 6),
             const SizedBox(height: 32),
             
             _buildSection(

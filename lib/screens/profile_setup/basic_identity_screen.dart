@@ -86,14 +86,7 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
     if (_formKey.currentState!.validate() && _gender.isNotEmpty) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      if (userProvider.currentUser == null) {
-        final newUser = UserProfile(
-          userId: const Uuid().v4(),
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        userProvider.setUser(newUser);
-      }
+      // NU mai creăm user nou aici - ar trebui să existe deja din RelationshipTypeScreen
       
       final identity = BasicIdentity(
         name: _nameController.text,
@@ -107,6 +100,10 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
       );
       
       userProvider.updateBasicIdentity(identity);
+      
+      print('🔍 BasicIdentityScreen - Salvat identity');
+      print('🔍 Relationship type păstrat: ${userProvider.currentUser?.values?.relationshipType}');
+      
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LifestyleScreen()));
     }
   }
@@ -122,7 +119,7 @@ class _BasicIdentityScreenState extends State<BasicIdentityScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const ProfileProgressIndicator(currentStep: 1, totalSteps: 7),
+              const ProfileProgressIndicator(currentStep: 2, totalSteps: 6),
               
               // Name field
               TextFormField(

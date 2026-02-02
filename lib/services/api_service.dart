@@ -170,6 +170,54 @@ class ApiService {
     return _handleResponse(response);
   }
   
+  // Ads endpoints
+  static Future<Map<String, dynamic>> createAd(Map<String, dynamic> adData) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/ads'),
+      headers: _getHeaders(),
+      body: jsonEncode(adData),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> getMyAds() async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/ads/my-ads'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> getAd(String adId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/ads/$adId'),
+      headers: _getHeaders(includeAuth: false),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> deleteAd(String adId) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/ads/$adId'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> searchAds(Map<String, dynamic> criteria) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/ads/search'),
+      headers: _getHeaders(includeAuth: false),
+      body: jsonEncode(criteria),
+    );
+    
+    return _handleResponse(response);
+  }
+  
   // Response handler
   static Map<String, dynamic> _handleResponse(http.Response response) {
     final data = jsonDecode(response.body);

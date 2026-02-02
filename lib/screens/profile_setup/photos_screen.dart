@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../models/user_profile.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/progress_indicator_widget.dart';
 import '../../services/api_service.dart';
+import '../../config/api_config.dart';
 import '../main_screen.dart';
 
 class PhotosScreen extends StatefulWidget {
@@ -242,6 +243,15 @@ class _PhotosScreenState extends State<PhotosScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
+      // VERIFICARE CRITICĂ: Utilizatorul trebuie să fie autentificat
+      if (!authProvider.isAuthenticated || authProvider.currentAuthUser?.id == null) {
+        throw Exception('Nu ești autentificat! Te rog să te loghezi din nou.');
+      }
+      
+      print('✅ User authenticated: ${authProvider.currentAuthUser?.email}');
+      print('✅ User ID: ${authProvider.currentAuthUser?.id}');
+      print('✅ Token exists: ${ApiService.getToken() != null}');
+      
       // Salvăm pozele
       final photos = Photos(
         photoUrls: _photoUrls,
@@ -286,10 +296,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
         'gender': profile?.basicIdentity?.gender ?? '',
         'country': profile?.basicIdentity?.country ?? '',
         'city': profile?.basicIdentity?.city ?? '',
+        'height': profile?.basicIdentity?.height ?? 170,
         'occupation': profile?.basicIdentity?.occupation ?? '',
         'phoneNumber': profile?.basicIdentity?.phoneNumber ?? '',
         
         // Lifestyle
+        'schedule': profile?.lifestyle?.schedule ?? '',
         'smokingHabit': profile?.lifestyle?.smoking ?? '',
         'drinkingHabit': profile?.lifestyle?.alcohol ?? '',
         'fitnessLevel': profile?.lifestyle?.exercise ?? '',
@@ -300,15 +312,20 @@ class _PhotosScreenState extends State<PhotosScreen> {
         'introvertExtrovert': profile?.personality?.socialType ?? '',
         'spontaneousPlanned': profile?.personality?.emotionalPace ?? '',
         'creativeAnalytical': profile?.personality?.conflictStyle ?? '',
+        'personalSpace': profile?.personality?.personalSpace ?? '',
         
         // Values
         'relationshipType': profile?.values?.relationshipType ?? '',
         'wantsChildren': profile?.values?.familyPlans ?? '',
         'religionImportance': profile?.values?.religion ?? '',
         'politicalAlignment': profile?.values?.politics ?? '',
+        'moneyManagement': profile?.values?.money ?? '',
+        'careerAmbition': profile?.values?.careerAmbition ?? '',
         
         // Interests
-        'interests': profile?.interests?.hobbies,
+        'interests': profile?.interests?.hobbies ?? [],
+        'musicTaste': profile?.interests?.musicTaste ?? [],
+        'travelAttitude': profile?.interests?.travelAttitude ?? '',
         
         // Photos
         'photos': _photoUrls.map((url) {
@@ -325,27 +342,37 @@ class _PhotosScreenState extends State<PhotosScreen> {
         'profileComplete': true,
       };
       
-      print('📤 Publicăm profilul cu datele: ${profileData.toString()}');
+      print('📤 Publicăm profilul cu datele:');
+      print('  userId: ${profileData['userId']}');
+      print('  name: ${profileData['name']}');
+      print('  relationshipType: ${profileData['relationshipType']}');
+      print('  photoCount: ${(_photoUrls.length)}');
+      print('  profileComplete: ${profileData['profileComplete']}');
       
       // Salvăm profilul pe server
+      print('🌐 Sending request to: ${ApiConfig.baseUrl}${ApiConfig.profile}');
       final response = await ApiService.saveProfile(profileData);
       
-      print('✅ Răspuns server la publicare: ${response.toString()}');
+      print('📥 Răspuns server la publicare:');
+      print('  success: ${response['success']}');
+      print('  message: ${response['message']}');
+      print('  full response: ${response.toString()}');
+      
+      // Verificăm dacă salvarea a avut succes
+      if (response['success'] != true) {
+        throw Exception('Salvarea pe server a eșuat: ${response['message'] ?? 'Eroare necunoscută'}');
+      }
       
       // IMPORTANT: Reîncarcă profilul de pe server pentru a sincroniza datele
-      if (response['success'] == true) {
-        print('🔄 Reîncărcăm profilul de pe server...');
-        final savedProfileData = await authProvider.loadUserProfileFromServer();
-        print('📥 Profile data from server: ${savedProfileData?.toString()}');
-        if (savedProfileData != null) {
-          userProvider.loadUserProfileFromServer(savedProfileData);
-          print('✅ Profil reîncărcat cu succes! Completion: ${userProvider.getCompletionPercentage()}%');
-          print('🔍 Relationship Type după reload: ${userProvider.currentUser?.values?.relationshipType}');
-        } else {
-          print('❌ EROARE: Nu am putut reîncărca profilul de pe server!');
-        }
+      print('🔄 Reîncărcăm profilul de pe server...');
+      final savedProfileData = await ApiService.getProfile();
+      
+      if (savedProfileData['success'] == true && savedProfileData['profile'] != null) {
+        userProvider.loadUserProfileFromServer(savedProfileData['profile']);
+        print('✅ Profil reîncărcat cu succes! Completion: ${userProvider.getCompletionPercentage()}%');
+        print('🔍 Relationship Type după reload: ${userProvider.currentUser?.values?.relationshipType}');
       } else {
-        print('❌ EROARE: Răspuns de la server fără success=true: $response');
+        print('⚠️ Nu am putut reîncărca profilul de pe server, dar datele au fost salvate.');
       }
       
       if (context.mounted) {
@@ -410,31 +437,19 @@ class _PhotosScreenState extends State<PhotosScreen> {
         await _createProfileOnServer();
       }
       
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        withData: true, // Important pentru web - încarcă bytes
-        allowCompression: false, // NU salvează în galerie
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
       );
       
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        
-        // Verificăm dacă bytes-urile sunt disponibile
-        if (file.bytes == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Eroare: Fișierul nu conține date. Încearcă alt fișier.'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          }
-          return;
-        }
+      if (image != null) {
+        final bytes = await image.readAsBytes();
         
         // Verificăm dimensiunea fișierului (max 5MB)
-        if (file.bytes!.length > 5 * 1024 * 1024) {
+        if (bytes.length > 5 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -448,12 +463,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
         
         // Upload la Cloudinary prin API
         print('🔄 Starting photo upload...');
-        print('📸 File name: ${file.name}');
-        print('📦 File size: ${file.bytes!.length} bytes');
+        print('📸 File name: ${image.name}');
+        print('📦 File size: ${bytes.length} bytes');
         
         final response = await ApiService.uploadPhoto(
-          file.bytes!,
-          file.name,
+          bytes,
+          image.name,
         );
         
         print('✅ Upload response: $response');
@@ -467,7 +482,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Fotografie adăugată: ${file.name}'),
+                content: Text('Fotografie adăugată: ${image.name}'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -532,8 +547,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileProgressIndicator(currentStep: 6, totalSteps: 7),
-            const SizedBox(height: 32),
+                  const ProfileProgressIndicator(currentStep: 7, totalSteps: 7),
             
             Text(
               'Fotografii (minim 1, recomandat 3-6)',

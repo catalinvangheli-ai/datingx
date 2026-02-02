@@ -120,29 +120,18 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
 
       print('📤 Postăm anunț...');
       
-      // PASUL 0: Ștergem toate pozele vechi pentru a posta anunț nou
+      // IMPORTANT: Ștergem pozele vechi din Profile (sistem vechi) 
+      // pentru a evita eroarea "maxim 6 poze"
       try {
-        print('🗑️ Ștergem pozele vechi...');
+        print('🗑️ Ștergem pozele vechi din Profile...');
         await ApiService.deleteAllPhotos();
         print('✅ Poze vechi șterse');
       } catch (e) {
-        print('⚠️ Nu s-au putut șterge pozele vechi (probabil nu existau): $e');
-        // Continuăm oricum - poate e primul anunț
+        print('⚠️ Nu s-au putut șterge pozele vechi (posibil să nu existe): $e');
+        // Continuăm oricum, poate nu există poze vechi
       }
       
-      // PASUL 1: Creăm/actualizăm profilul cu date de bază pentru a permite upload-ul de poze
-      final initialProfileData = {
-        'name': _nameController.text.trim(),
-        'age': int.tryParse(_ageController.text.trim()) ?? 18,
-        'gender': _gender ?? '',
-        'country': _countryController.text.trim(),
-        'profileComplete': false, // Încă nu e complet
-      };
-      
-      print('📋 Creăm profilul de bază...');
-      await ApiService.saveProfile(initialProfileData);
-      
-      // PASUL 2: Upload poze (acestea se salvează automat în profil prin /photo/upload)
+      // Upload poze ȘI salvează anunțul complet
       List<Map<String, String>> uploadedPhotos = [];
       for (var image in _selectedImages) {
         print('📸 Încărcăm poza: ${image.path}');
@@ -158,9 +147,10 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
         }
       }
 
-      // PASUL 3: Actualizăm profilul cu toate datele complete
+      // Creăm anunțul cu toate datele
       final adData = {
-        // Date de bază OBLIGATORII pentru căutare
+        'title': _titleController.text.trim(),
+        'bio': _descriptionController.text.trim(),
         'name': _nameController.text.trim(),
         'age': int.tryParse(_ageController.text.trim()) ?? 18,
         'gender': _gender ?? '',
@@ -169,17 +159,11 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
         'phoneNumber': _phoneController.text.trim(),
         'relationshipType': _relationshipType ?? '',
         'interests': _selectedInterests,
-        
-        // Bio include titlul și descrierea
-        'bio': '${_titleController.text.trim()}\n\n${_descriptionController.text.trim()}',
-        
-        // NU trimitem photos - sunt deja salvate prin /photo/upload
-        
-        'profileComplete': true, // ACUM e complet
+        'photos': uploadedPhotos,
       };
 
-      print('📤 Salvăm datele anunțului: $adData');
-      final saveResponse = await ApiService.saveProfile(adData);
+      print('📤 Salvăm anunțul: $adData');
+      final saveResponse = await ApiService.createAd(adData);
       
       if (saveResponse['success'] == true) {
         print('✅ Anunț postat cu succes!');
@@ -193,11 +177,10 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
             ),
           );
           
-          // Așteaptă puțin și apoi întoarce-te
           await Future.delayed(const Duration(seconds: 1));
           
           if (mounted) {
-            Navigator.pop(context, true); // Returnează true pentru a indica succes
+            Navigator.pop(context, true);
           }
         }
       } else {
