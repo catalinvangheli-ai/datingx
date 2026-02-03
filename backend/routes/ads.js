@@ -154,6 +154,8 @@ router.post('/search', async (req, res) => {
       interests
     } = req.body;
 
+    console.log('🔍 SEARCH REQUEST:', { gender, minAge, maxAge, relationshipType, country, city, interests });
+
     // Validate required fields
     if (!gender || !minAge || !maxAge || !relationshipType) {
       return res.status(400).json({
@@ -162,26 +164,37 @@ router.post('/search', async (req, res) => {
       });
     }
 
-    // Build search query
+    // Build search query - SIMPLIFICAT pentru debugging
     const query = {
       active: true,
-      gender: new RegExp(`^${gender}$`, 'i'),
-      age: { $gte: minAge, $lte: maxAge },
-      relationshipType: new RegExp(relationshipType, 'i')
+      gender: gender, // Exact match fără RegExp
+      age: { $gte: parseInt(minAge), $lte: parseInt(maxAge) },
+      relationshipType: relationshipType // Exact match
     };
 
     // Add optional filters
-    if (country) query.country = new RegExp(country, 'i');
-    if (city) query.city = new RegExp(city, 'i');
+    if (country) query.country = country;
+    if (city) query.city = city;
     
     // Interests matching
     if (interests && interests.length > 0) {
       query.interests = { $in: interests };
     }
 
+    console.log('🔍 SEARCH QUERY:', JSON.stringify(query, null, 2));
+
     const results = await Ad.find(query)
       .sort({ createdAt: -1 })
       .limit(50);
+
+    console.log(`✅ FOUND ${results.length} ads`);
+    if (results.length > 0) {
+      console.log('First result:', JSON.stringify(results[0], null, 2));
+    }
+
+    // Check total ads in database
+    const totalAds = await Ad.countDocuments({ active: true });
+    console.log(`📊 Total active ads in DB: ${totalAds}`);
 
     res.json({
       success: true,
