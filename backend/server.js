@@ -7,6 +7,8 @@ const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const photoRoutes = require('./routes/photo');
 const adsRoutes = require('./routes/ads');
+const favoritesRoutes = require('./routes/favorites');
+const messagesRoutes = require('./routes/messages');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/photo', photoRoutes);
 app.use('/api/ads', adsRoutes);
+app.use('/api/favorites', favoritesRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
