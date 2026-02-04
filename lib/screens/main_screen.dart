@@ -165,9 +165,9 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return _buildDiscoverTab();
       case 1:
-        return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.favorite, size: 64, color: Colors.pink), SizedBox(height: 16), Text('Compatibilitățile tale', style: TextStyle(fontSize: 18))]));
+        return _buildFavoritesTab();
       case 2:
-        return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.message, size: 64, color: Colors.pink), SizedBox(height: 16), Text('Mesajele tale', style: TextStyle(fontSize: 18))]));
+        return _buildMessagesTab();
       case 3:
         return _buildProfileTab();
       default:
@@ -381,7 +381,23 @@ class _MainScreenState extends State<MainScreen> {
               itemCount: _myAds.length,
               itemBuilder: (context, index) {
                 final ad = _myAds[index];
-                final photos = (ad['photos'] as List?)?.map((p) => p['url'] as String).toList() ?? [];
+                
+                // Extrage pozele cu verificare robustă
+                List<String> photos = [];
+                try {
+                  if (ad['photos'] != null) {
+                    final photosList = ad['photos'] as List;
+                    for (var p in photosList) {
+                      if (p is Map && p['url'] != null && p['url'] is String) {
+                        photos.add(p['url'] as String);
+                      } else if (p is String) {
+                        photos.add(p);
+                      }
+                    }
+                  }
+                } catch (e) {
+                  print('⚠️ Error parsing photos for ad ${ad['_id']}: $e');
+                }
                 
                 return Card(
                   margin: EdgeInsets.only(bottom: 16),
@@ -619,6 +635,278 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFavoritesTab() {
+    return FutureBuilder(
+      future: ApiService.getMyFavorites(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('Eroare: ${snapshot.error}'),
+              ],
+            ),
+          );
+        }
+
+        final data = snapshot.data as Map<String, dynamic>;
+        final favorites = data['favorites'] as List? ?? [];
+
+        if (favorites.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'Niciun anunț salvat',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Salvează anunțurile care te interesează',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: favorites.length,
+          itemBuilder: (context, index) {
+            final ad = favorites[index];
+
+            // Extrage pozele cu verificare robustă
+            List<String> photos = [];
+            try {
+              if (ad['photos'] != null) {
+                final photosList = ad['photos'] as List;
+                for (var p in photosList) {
+                  if (p is Map && p['url'] != null && p['url'] is String) {
+                    photos.add(p['url'] as String);
+                  } else if (p is String) {
+                    photos.add(p);
+                  }
+                }
+              }
+            } catch (e) {
+              print('⚠️ Error parsing photos for ad ${ad['_id']}: $e');
+            }
+
+            return Card(
+              margin: EdgeInsets.only(bottom: 16),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdDetailScreen(adId: ad['_id']),
+                    ),
+                  ).then((_) => setState(() {})); // Refresh când se întoarce
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // Thumbnail
+                      if (photos.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            photos.first,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                color: Colors.grey[300],
+                                child: Icon(Icons.person, size: 40),
+                              );
+                            },
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.pink[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.person, size: 40, color: Colors.pink),
+                        ),
+                      SizedBox(width: 16),
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ad['title'] ?? 'Fără titlu',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '${ad['name']} • ${ad['age']} ani',
+                              style: TextStyle(color: Colors.grey[700]),
+                            ),
+                            if (ad['city'] != null)
+                              Text(
+                                '📍 ${ad['city']}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.favorite, color: Colors.red),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMessagesTab() {
+    return FutureBuilder(
+      future: ApiService.getConversations(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('Eroare: ${snapshot.error}'),
+              ],
+            ),
+          );
+        }
+
+        final data = snapshot.data as Map<String, dynamic>;
+        final conversations = data['conversations'] as List? ?? [];
+
+        if (conversations.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.message_outlined, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'Niciun mesaj',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Trimite primul mesaj când găsești pe cineva interesant',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: conversations.length,
+          itemBuilder: (context, index) {
+            final conv = conversations[index];
+            final hasUnread = (conv['unreadCount'] ?? 0) > 0;
+
+            return Card(
+              margin: EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: conv['adPhoto'] != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(25),
+                        child: Image.network(
+                          conv['adPhoto'],
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.pink[100],
+                              child: Icon(Icons.person, color: Colors.pink),
+                            );
+                          },
+                        ),
+                      )
+                    : CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Colors.pink[100],
+                        child: Icon(Icons.person, color: Colors.pink),
+                      ),
+                title: Text(
+                  conv['adName'] ?? conv['userEmail'] ?? 'Utilizator',
+                  style: TextStyle(
+                    fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                subtitle: Text(
+                  conv['lastMessage'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: hasUnread ? Colors.black : Colors.grey,
+                    fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                ),
+                trailing: hasUnread
+                    ? Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.pink,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${conv['unreadCount']}',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      )
+                    : Icon(Icons.chevron_right),
+                onTap: () {
+                  // TODO: Navigate to chat screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Deschide chat cu ${conv['adName']}')),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

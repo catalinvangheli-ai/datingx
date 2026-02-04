@@ -409,7 +409,23 @@ class _SearchScreenState extends State<SearchScreen> {
             itemCount: _searchResults.length,
             itemBuilder: (context, index) {
               final ad = _searchResults[index];
-              final photos = (ad['photos'] as List?)?.map((p) => p['url'] as String).toList() ?? [];
+              
+              // Extrage pozele cu verificare robustă
+              List<String> photos = [];
+              try {
+                if (ad['photos'] != null) {
+                  final photosList = ad['photos'] as List;
+                  for (var p in photosList) {
+                    if (p is Map && p['url'] != null && p['url'] is String) {
+                      photos.add(p['url'] as String);
+                    } else if (p is String) {
+                      photos.add(p);
+                    }
+                  }
+                }
+              } catch (e) {
+                print('⚠️ Error parsing photos for ad ${ad['_id']}: $e');
+              }
               
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),

@@ -17,11 +17,14 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   Map<String, dynamic>? _ad;
   bool _isLoading = true;
   bool _isMyAd = false;
+  bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadAd();
+    _checkIfFavorite();
   }
 
   Future<void> _loadAd() async {
@@ -46,6 +49,108 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _checkIfFavorite() async {
+    try {
+      final response = await ApiService.checkIsFavorite(widget.adId);
+      if (response['success'] == true && mounted) {
+        setState(() {
+          _isFavorite = response['isFavorite'] ?? false;
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite: $e');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    setState(() => _isFavoriteLoading = true);
+    try {
+      final response = _isFavorite
+          ? await ApiService.removeFromFavorites(widget.adId)
+          : await ApiService.addToFavorites(widget.adId);
+
+      if (response['success'] == true && mounted) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isFavorite ? '❤️ Adăugat la favorite!' : 'Eliminat din favorite'),
+            backgroundColor: _isFavorite ? Colors.pink : Colors.grey,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Eroare: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFavoriteLoading = false);
+      }
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    if (_ad == null) return;
+
+    final messageController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Trimite mesaj către ${_ad!['name']}'),
+        content: TextField(
+          controller: messageController,
+          decoration: InputDecoration(
+            hintText: 'Scrie mesajul tău...',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+          maxLength: 500,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Anulează'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, messageController.text.trim()),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
+            child: Text('Trimite'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      try {
+        final response = await ApiService.sendMessage(
+          _ad!['userId'],
+          widget.adId,
+          result,
+        );
+
+        if (response['success'] == true && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Mesaj trimis cu succes!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Eroare: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
@@ -102,7 +207,32 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   tooltip: 'Șterge anunțul',
                 ),
               ]
-            : null,
+            : [
+                // Buton favorite
+                _isFavoriteLoading
+                    ? Padding(
+                        padding: EdgeInsets.all(16),
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : IconButton(
+                        icon: Icon(
+                          _isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: _isFavorite ? Colors.red : null,
+                        ),
+                        onPressed: _toggleFavorite,
+                        tooltip: _isFavorite ? 'Elimină din favorite' : 'Adaugă la favorite',
+                      ),
+                // Buton mesaj
+                IconButton(
+                  icon: Icon(Icons.message, color: Colors.blue),
+                  onPressed: _sendMessage,
+                  tooltip: 'Trimite mesaj',
+                ),
+              ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
@@ -122,7 +252,27 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   }
 
   Widget _buildAdContent() {
-    final photos = (_ad!['photos'] as List?)?.map((p) => p['url'] as String).toList() ?? [];
+    // Extrage pozele cu verificare robustă
+    List<String> photos = [];
+    try {
+      if (_ad!['photos'] != null) {
+        final photosList = _ad!['photos'] as List;
+        for (var p in photosList) {
+          if (p is Map && p['url'] != null && p['url'] is String) {
+            photos.add(p['url'] as String);
+          } else if (p is String) {
+            // Compatibilitate pentru format vechi
+            photos.add(p);
+          }
+        }
+      }
+      print('📸 Photos loaded: ${photos.length} photos');
+      if (photos.isNotEmpty) {
+        print('First photo URL: ${photos.first}');
+      }
+    } catch (e) {
+      print('⚠️ Error parsing photos: $e');
+    }
     
     return SingleChildScrollView(
       child: Column(

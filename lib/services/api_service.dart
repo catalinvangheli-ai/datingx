@@ -218,6 +218,89 @@ class ApiService {
     return _handleResponse(response);
   }
   
+  // ============= FAVORITES =============
+  
+  static Future<Map<String, dynamic>> getMyFavorites() async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/favorites/my-favorites'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> checkIsFavorite(String adId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/favorites/check/$adId'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> addToFavorites(String adId) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/favorites/add/$adId'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> removeFromFavorites(String adId) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/favorites/remove/$adId'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  // ============= MESSAGES =============
+  
+  static Future<Map<String, dynamic>> getConversations() async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/messages/conversations'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> getChatMessages(String otherUserId, String adId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/messages/chat/$otherUserId/$adId'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> sendMessage(String receiverId, String adId, String text) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/messages/send'),
+      headers: _getHeaders(),
+      body: jsonEncode({
+        'receiverId': receiverId,
+        'adId': adId,
+        'text': text,
+      }),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  static Future<Map<String, dynamic>> getUnreadCount() async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/messages/unread-count'),
+      headers: _getHeaders(),
+    );
+    
+    return _handleResponse(response);
+  }
+  
+  // ============= RESPONSE HANDLER =============
+  
   // Response handler
   static Map<String, dynamic> _handleResponse(http.Response response) {
     final data = jsonDecode(response.body);
