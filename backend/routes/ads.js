@@ -151,10 +151,22 @@ router.post('/search', async (req, res) => {
       relationshipType,
       country,
       city,
-      interests
+      interests,
+      // Criterii opționale noi
+      hasChildren,
+      wantsChildren,
+      education,
+      minHeight,
+      maxHeight,
+      smoking,
+      drinking,
+      religion,
+      languages,
+      bodyType,
+      relationshipStatus
     } = req.body;
 
-    console.log('🔍 SEARCH REQUEST:', { gender, minAge, maxAge, relationshipType, country, city, interests });
+    console.log('🔍 SEARCH REQUEST:', req.body);
 
     // Validate required fields
     if (!gender || !minAge || !maxAge || !relationshipType) {
@@ -164,15 +176,15 @@ router.post('/search', async (req, res) => {
       });
     }
 
-    // Build search query - SIMPLIFICAT pentru debugging
+    // Build search query
     const query = {
       active: true,
-      gender: gender, // Exact match fără RegExp
+      gender: gender,
       age: { $gte: parseInt(minAge), $lte: parseInt(maxAge) },
-      relationshipType: relationshipType // Exact match
+      relationshipType: relationshipType
     };
 
-    // Add optional filters
+    // Add optional filters - toate sunt opționale
     if (country) query.country = country;
     if (city) query.city = city;
     
@@ -181,20 +193,36 @@ router.post('/search', async (req, res) => {
       query.interests = { $in: interests };
     }
 
+    // CRITERII NOI OPȚIONALE
+    if (hasChildren) query.hasChildren = hasChildren;
+    if (wantsChildren) query.wantsChildren = wantsChildren;
+    if (education) query.education = education;
+    
+    // Înălțime range
+    if (minHeight || maxHeight) {
+      query.height = {};
+      if (minHeight) query.height.$gte = parseInt(minHeight);
+      if (maxHeight) query.height.$lte = parseInt(maxHeight);
+    }
+    
+    if (smoking) query.smoking = smoking;
+    if (drinking) query.drinking = drinking;
+    if (religion) query.religion = religion;
+    if (bodyType) query.bodyType = bodyType;
+    if (relationshipStatus) query.relationshipStatus = relationshipStatus;
+    
+    // Languages matching (unul sau mai multe)
+    if (languages && languages.length > 0) {
+      query.languages = { $in: languages };
+    }
+
     console.log('🔍 SEARCH QUERY:', JSON.stringify(query, null, 2));
 
     const results = await Ad.find(query)
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(100); // Măresc limita la 100
 
     console.log(`✅ FOUND ${results.length} ads`);
-    if (results.length > 0) {
-      console.log('First result:', JSON.stringify(results[0], null, 2));
-    }
-
-    // Check total ads in database
-    const totalAds = await Ad.countDocuments({ active: true });
-    console.log(`📊 Total active ads in DB: ${totalAds}`);
 
     res.json({
       success: true,

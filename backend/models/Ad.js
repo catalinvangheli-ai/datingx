@@ -30,6 +30,33 @@ const adSchema = new mongoose.Schema({
   relationshipType: { type: String, required: true },
   interests: [String],
   
+  // CRITERII OPȚIONALE NOI
+  // 1. Copii
+  hasChildren: { type: String }, // "Da", "Nu", "Prefer să nu spun"
+  wantsChildren: { type: String }, // "Da", "Nu", "Poate", "Deja am"
+  
+  // 2. Educație
+  education: { type: String }, // "Liceu", "Facultate", "Masterat", "Doctorat", "Altele"
+  
+  // 3. Înălțime
+  height: { type: Number }, // cm (ex: 175)
+  
+  // 4. Stil de viață
+  smoking: { type: String }, // "Nu", "Ocazional", "Da"
+  drinking: { type: String }, // "Nu consum", "Ocazional", "Social", "Frecvent"
+  
+  // 5. Religie
+  religion: { type: String }, // "Creștin-Ortodox", "Catolic", "Protestant", "Muslim", etc.
+  
+  // 6. Limbi vorbite
+  languages: [String], // Array: ["Română", "Engleză", "Italiană", etc.]
+  
+  // 7. Tip corp
+  bodyType: { type: String }, // "Athletic", "Slim", "Average", "Curvy", "Plus Size"
+  
+  // 8. Status relație
+  relationshipStatus: { type: String }, // "Necăsătorit(ă)", "Divorțat(ă)", "Văduv(ă)"
+  
   // Poze
   photos: [photoSchema],
   
@@ -47,6 +74,9 @@ const adSchema = new mongoose.Schema({
 // Indexuri pentru căutare
 adSchema.index({ userId: 1, active: 1 });
 adSchema.index({ gender: 1, age: 1, country: 1, relationshipType: 1, active: 1 });
+adSchema.index({ city: 1, active: 1 }); // Pentru căutare după oraș
+adSchema.index({ height: 1, education: 1, active: 1 }); // Pentru filtrare după înălțime/educație
+adSchema.index({ hasChildren: 1, wantsChildren: 1, active: 1 }); // Pentru criterii copii
 adSchema.index({ createdAt: -1 }); // Pentru sortare după data postării
 
 module.exports = mongoose.model('Ad', adSchema);
