@@ -22,10 +22,22 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
   final _cityController = TextEditingController();
   final _countryController = TextEditingController();
   final _ageController = TextEditingController();
+  final _heightController = TextEditingController(); // Controller pentru înălțime
   
   String? _gender;
   String? _relationshipType;
   List<String> _selectedInterests = [];
+  
+  // CRITERII OPȚIONALE NOI
+  String? _hasChildren;
+  String? _wantsChildren;
+  String? _education;
+  String? _smoking;
+  String? _drinking;
+  String? _religion;
+  List<String> _selectedLanguages = [];
+  String? _bodyType;
+  String? _relationshipStatus;
   
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -53,7 +65,29 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
     'Tehnologie',
     'Natură'
   ];
+  
+  // Liste pentru criterii noi
+  final List<String> _hasChildrenOptions = ['Nu', 'Da', 'Prefer să nu spun'];
+  final List<String> _wantsChildrenOptions = ['Da', 'Nu', 'Poate', 'Deja am'];
+  final List<String> _educationOptions = ['Liceu', 'Facultate', 'Masterat', 'Doctorat', 'Altele'];
+  final List<String> _smokingOptions = ['Nu', 'Ocazional', 'Da'];
+  final List<String> _drinkingOptions = ['Nu consum', 'Ocazional', 'Social', 'Frecvent'];
+  final List<String> _religionOptions = [
+    'Creștin-Ortodox', 'Catolic', 'Protestant', 'Muslim', 
+    'Budist', 'Ateu', 'Agnostic', 'Alta'
+  ];
+  final List<String> _allLanguages = [
+    'Română', 'Engleză', 'Franceză', 'Germană', 'Spaniolă', 
+    'Italiană', 'Rusă', 'Maghiară', 'Turcă'
+  ];
+  final List<String> _bodyTypeOptions = [
+    'Athletic', 'Slim', 'Average', 'Curvy', 'Plus Size'
+  ];
+  final List<String> _relationshipStatusOptions = [
+    'Necăsătorit(ă)', 'Divorțat(ă)', 'Văduv(ă)'
+  ];
 
+  @override
   @override
   void dispose() {
     _titleController.dispose();
@@ -63,6 +97,7 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
     _cityController.dispose();
     _countryController.dispose();
     _ageController.dispose();
+    _heightController.dispose();
     super.dispose();
   }
 
@@ -160,6 +195,18 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
         'relationshipType': _relationshipType ?? '',
         'interests': _selectedInterests,
         'photos': uploadedPhotos,
+        // CRITERII OPȚIONALE NOI - trimite doar dacă sunt completate
+        if (_hasChildren != null) 'hasChildren': _hasChildren,
+        if (_wantsChildren != null) 'wantsChildren': _wantsChildren,
+        if (_education != null) 'education': _education,
+        if (_heightController.text.trim().isNotEmpty) 
+          'height': int.tryParse(_heightController.text.trim()),
+        if (_smoking != null) 'smoking': _smoking,
+        if (_drinking != null) 'drinking': _drinking,
+        if (_religion != null) 'religion': _religion,
+        if (_selectedLanguages.isNotEmpty) 'languages': _selectedLanguages,
+        if (_bodyType != null) 'bodyType': _bodyType,
+        if (_relationshipStatus != null) 'relationshipStatus': _relationshipStatus,
       };
 
       print('📤 Salvăm anunțul: $adData');
@@ -643,6 +690,201 @@ class _AdPostingScreenState extends State<AdPostingScreen> {
                     },
                   );
                 }).toList(),
+              ),
+              const SizedBox(height: 24),
+
+              // DIVIDER - Criterii detaliate
+              Divider(thickness: 2),
+              Text(
+                '✨ Criterii Detaliate (Opțional)',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFE91E63),
+                ),
+              ),
+              Text(
+                'Completează pentru a primi match-uri mai relevante',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 16),
+
+              // 1. Copii
+              Text('Ai copii?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _hasChildren,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _hasChildrenOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _hasChildren = value),
+              ),
+              const SizedBox(height: 16),
+
+              Text('Dorești copii în viitor?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _wantsChildren,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _wantsChildrenOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _wantsChildren = value),
+              ),
+              const SizedBox(height: 16),
+
+              // 2. Educație
+              Text('Educație', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _education,
+                decoration: InputDecoration(
+                  hintText: 'Selectează nivelul',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _educationOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _education = value),
+              ),
+              const SizedBox(height: 16),
+
+              // 3. Înălțime
+              Text('Înălțime (cm)', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _heightController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'ex: 175',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  suffixText: 'cm',
+                ),
+                validator: (value) {
+                  if (value != null && value.trim().isNotEmpty) {
+                    final height = int.tryParse(value.trim());
+                    if (height == null) {
+                      return 'Introdu un număr valid';
+                    }
+                    if (height < 100 || height > 250) {
+                      return 'Înălțimea trebuie să fie între 100-250 cm';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 4. Stil viață
+              Text('Fumător?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _smoking,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _smokingOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _smoking = value),
+              ),
+              const SizedBox(height: 16),
+
+              Text('Consum alcool?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _drinking,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _drinkingOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _drinking = value),
+              ),
+              const SizedBox(height: 16),
+
+              // 5. Religie
+              Text('Religie', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _religion,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _religionOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _religion = value),
+              ),
+              const SizedBox(height: 16),
+
+              // 6. Limbi vorbite
+              Text('Limbi vorbite', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _allLanguages.map((lang) {
+                  final isSelected = _selectedLanguages.contains(lang);
+                  return FilterChip(
+                    label: Text(lang),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedLanguages.add(lang);
+                        } else {
+                          _selectedLanguages.remove(lang);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              // 7. Tip corp
+              Text('Tip corp', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _bodyType,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _bodyTypeOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _bodyType = value),
+              ),
+              const SizedBox(height: 16),
+
+              // 8. Status relație
+              Text('Status relație', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _relationshipStatus,
+                decoration: InputDecoration(
+                  hintText: 'Selectează',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                items: _relationshipStatusOptions.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                onChanged: (value) => setState(() => _relationshipStatus = value),
               ),
               const SizedBox(height: 32),
 
