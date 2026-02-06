@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # State Management
   provider: ^6.1.1
@@ -27,7 +29,7 @@ dependencies:
   url_launcher: ^6.2.4
   
   # Utilities
-  intl: ^0.18.1
+  intl: ^0.20.2
   uuid: ^4.2.2
   image_picker: ^1.0.7
   file_picker: ^8.0.0

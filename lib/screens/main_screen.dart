@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 import '../services/api_service.dart';
+import '../config/app_localizations.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 import 'search_screen.dart';
@@ -621,6 +623,23 @@ class _MainScreenState extends State<MainScreen> {
           
           SizedBox(height: 16),
           
+          // Buton schimbare limbă
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showLanguageDialog(),
+              icon: Icon(Icons.language),
+              label: Text('Schimbă Limba'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -636,6 +655,67 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showLanguageDialog() {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.language, color: Colors.blue),
+              SizedBox(width: 12),
+              Text('Selectează Limba'),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: LanguageProvider.availableLanguages.length,
+              itemBuilder: (context, index) {
+                final lang = LanguageProvider.availableLanguages[index];
+                final isSelected = languageProvider.locale.languageCode == lang['code'];
+                
+                return ListTile(
+                  leading: Text(
+                    lang['flag']!,
+                    style: TextStyle(fontSize: 32),
+                  ),
+                  title: Text(
+                    lang['name']!,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.blue : Colors.black,
+                    ),
+                  ),
+                  trailing: isSelected ? Icon(Icons.check_circle, color: Colors.blue) : null,
+                  onTap: () {
+                    languageProvider.setLocale(Locale(lang['code']!));
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${lang['flag']} Limba schimbată în ${lang['name']}'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Închide'),
+            ),
+          ],
+        );
+      },
     );
   }
 
