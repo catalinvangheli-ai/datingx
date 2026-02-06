@@ -9,6 +9,7 @@ import 'search_screen.dart';
 import 'ad_posting_screen.dart';
 import 'photo_gallery_screen.dart';
 import 'ad_detail_screen.dart';
+import 'chat_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -897,10 +898,19 @@ class _MainScreenState extends State<MainScreen> {
                       )
                     : Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Navigate to chat screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Deschide chat cu ${conv['adName']}')),
-                  );
+                  // Deschide ecranul de chat
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        otherUserId: conv['userId'],
+                        otherUserName: conv['adName'] ?? conv['userEmail'] ?? 'Utilizator',
+                        adId: conv['adId'],
+                        adTitle: conv['adTitle'] ?? '',
+                        adPhoto: conv['adPhoto'],
+                      ),
+                    ),
+                  ).then((_) => setState(() {})); // Refresh când se întoarce
                 },
               ),
             );
