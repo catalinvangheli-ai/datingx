@@ -570,6 +570,42 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
           ),
+          
+          SizedBox(height: 16),
+          
+          // Buton schimbare limbă
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showLanguageDialog(),
+              icon: Icon(Icons.language),
+              label: Text('Schimbă Limba'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
+          // Buton ștergere cont
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _deleteAccount,
+              icon: Icon(Icons.delete_forever),
+              label: Text('Șterge Cont'),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                foregroundColor: Colors.red,
+                side: BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
         ],
       ),
     );
