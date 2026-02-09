@@ -132,18 +132,20 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DatingX'),
+        title: Text(t.translate('app_name')),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded),
-            tooltip: 'Caută Pereche',
-            onPressed: _searchForMatch,
+            icon: const Icon(Icons.language),
+            tooltip: t.translate('change_language'),
+            onPressed: _showLanguageDialog,
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: t.translate('logout'),
             onPressed: _logout,
           ),
         ],
@@ -153,11 +155,11 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Descoperă'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Compatibilități'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mesaje'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.explore), label: t.translate('discover')),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: t.translate('favorites')),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: t.translate('messages')),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: t.translate('profile')),
         ],
       ),
     );
@@ -183,6 +185,7 @@ class _MainScreenState extends State<MainScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final isLoggedIn = authProvider.isAuthenticated;
     final completionPercentage = userProvider.getCompletionPercentage();
+    final t = AppLocalizations.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -204,7 +207,7 @@ class _MainScreenState extends State<MainScreen> {
               Icon(Icons.explore, size: 80, color: Colors.white),
               SizedBox(height: 24),
               Text(
-                'Descoperă Perechea Perfectă',
+                t.translate('search_perfect_match'),
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
@@ -221,7 +224,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _searchForMatch,
                   icon: Icon(Icons.search, size: 28),
-                  label: Text('Caută Perechea Perfectă', style: TextStyle(fontSize: 18)),
+                  label: Text(t.translate('search_perfect_match'), style: TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 20, horizontal: 32),
                     backgroundColor: Colors.white,
@@ -253,7 +256,7 @@ class _MainScreenState extends State<MainScreen> {
                   }
                 },
                 icon: Icon(Icons.add_circle_outline, size: 24),
-                label: Text('Publică Anunț Matrimonial', style: TextStyle(fontSize: 16)),
+                label: Text(t.translate('post_matrimonial_ad'), style: TextStyle(fontSize: 16)),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 18, horizontal: 32),
                   foregroundColor: Colors.white,
@@ -272,6 +275,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildProfileTab() {
     final authProvider = Provider.of<AuthProvider>(context);
     final isLoggedIn = authProvider.isAuthenticated;
+    final t = AppLocalizations.of(context);
 
     // Dacă nu e logat, arată opțiuni de login/register
     if (!isLoggedIn) {
@@ -305,7 +309,7 @@ class _MainScreenState extends State<MainScreen> {
                     );
                   },
                   icon: Icon(Icons.login, size: 24),
-                  label: Text('Conectare / Înregistrare', style: TextStyle(fontSize: 18)),
+                  label: Text(t.translate('login_register'), style: TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     backgroundColor: Colors.pink,
@@ -331,7 +335,7 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Anunțurile Mele',
+                t.translate('my_ads_title'),
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               IconButton(
@@ -345,7 +349,7 @@ class _MainScreenState extends State<MainScreen> {
                   }
                 },
                 icon: Icon(Icons.logout),
-                tooltip: 'Delogare',
+                tooltip: t.translate('logout'),
               ),
             ],
           ),
@@ -510,12 +514,12 @@ class _MainScreenState extends State<MainScreen> {
                     Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
                     Text(
-                      'Nu ai anunțuri postate încă',
+                      t.translate('no_ads_yet'),
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Postează primul tău anunț pentru a găsi perechea perfectă!',
+                      t.translate('post_first_ad'),
                       style: TextStyle(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
@@ -543,7 +547,7 @@ class _MainScreenState extends State<MainScreen> {
                 }
               },
               icon: Icon(Icons.add_circle_outline),
-              label: Text('Postează Anunț Nou'),
+              label: Text(t.translate('post_new_ad')),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: Colors.pink,
@@ -561,7 +565,7 @@ class _MainScreenState extends State<MainScreen> {
             child: OutlinedButton.icon(
               onPressed: _searchForMatch,
               icon: Icon(Icons.search),
-              label: Text('Caută Perechea Potrivită'),
+              label: Text(t.translate('find_match')),
               style: OutlinedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 foregroundColor: Colors.pink,
@@ -696,6 +700,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _showLanguageDialog() {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final t = AppLocalizations.of(context);
     
     showDialog(
       context: context,
@@ -705,7 +710,7 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               Icon(Icons.language, color: Colors.blue),
               SizedBox(width: 12),
-              Text('Selectează Limba'),
+              Text(t.translate('change_language')),
             ],
           ),
           content: SizedBox(
@@ -735,7 +740,7 @@ class _MainScreenState extends State<MainScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${lang['flag']} Limba schimbată în ${lang['name']}'),
+                        content: Text('${lang['flag']} ${lang['name']}'),
                         duration: Duration(seconds: 2),
                       ),
                     );
@@ -747,7 +752,7 @@ class _MainScreenState extends State<MainScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Închide'),
+              child: Text(t.translate('cancel')),
             ),
           ],
         );
@@ -756,6 +761,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildFavoritesTab() {
+    final t = AppLocalizations.of(context);
+    
     return FutureBuilder(
       future: ApiService.getMyFavorites(),
       builder: (context, snapshot) {
@@ -787,12 +794,12 @@ class _MainScreenState extends State<MainScreen> {
                 Icon(Icons.favorite_border, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
-                  'Niciun anunț salvat',
+                  t.translate('no_favorites'),
                   style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Salvează anunțurile care te interesează',
+                  t.translate('save_favorites'),
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
@@ -908,6 +915,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildMessagesTab() {
+    final t = AppLocalizations.of(context);
+    
     return FutureBuilder(
       future: ApiService.getConversations(),
       builder: (context, snapshot) {
@@ -939,12 +948,12 @@ class _MainScreenState extends State<MainScreen> {
                 Icon(Icons.message_outlined, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
-                  'Niciun mesaj',
+                  t.translate('no_messages'),
                   style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Trimite primul mesaj când găsești pe cineva interesant',
+                  t.translate('start_messaging'),
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
