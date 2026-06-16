@@ -1,4 +1,6 @@
+console.log('[server.js] Loading...');
 require('dotenv').config();
+console.log('[server.js] dotenv OK');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -47,19 +49,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// MongoDB Connection
+// Start server immediately (Railway health check needs port open fast)
+const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on ${HOST}:${PORT}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// MongoDB Connection (async, after server is already listening)
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    
-    // Start server
-    const PORT = process.env.PORT || 5000;
-    const HOST = '0.0.0.0'; // Listen on all network interfaces (required for Railway)
-    
-    app.listen(PORT, HOST, () => {
-      console.log(`🚀 Server running on ${HOST}:${PORT}`);
-      console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
   })
   .catch((error) => {
     console.error('❌ MongoDB connection error:', error);
