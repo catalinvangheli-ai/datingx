@@ -1,6 +1,4 @@
-console.log('[server.js] Loading...');
 require('dotenv').config();
-console.log('[server.js] dotenv OK');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
