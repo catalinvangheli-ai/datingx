@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
@@ -9,16 +10,18 @@ const photoRoutes = require('./routes/photo');
 const adsRoutes = require('./routes/ads');
 const favoritesRoutes = require('./routes/favorites');
 const messagesRoutes = require('./routes/messages');
+const reportsRoutes = require('./routes/reports');
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: process.env.FRONTEND_URL ? true : false
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -27,6 +30,7 @@ app.use('/api/photo', photoRoutes);
 app.use('/api/ads', adsRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

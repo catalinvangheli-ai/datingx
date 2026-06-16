@@ -299,16 +299,39 @@ class ApiService {
     return _handleResponse(response);
   }
   
+  // ============= REPORTS =============
+
+  static Future<Map<String, dynamic>> reportUser({
+    required String reportedUserId,
+    required String reason,
+    String details = '',
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.reports}'),
+      headers: _getHeaders(),
+      body: jsonEncode({
+        'reportedUserId': reportedUserId,
+        'reason': reason,
+        'details': details,
+      }),
+    );
+    
+    return _handleResponse(response);
+  }
+  
   // ============= RESPONSE HANDLER =============
   
   // Response handler
   static Map<String, dynamic> _handleResponse(http.Response response) {
-    final data = jsonDecode(response.body);
-    
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return data;
-    } else {
-      throw Exception(data['message'] ?? 'Eroare la comunicarea cu serverul');
+    try {
+      final data = jsonDecode(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return data;
+      } else {
+        throw Exception(data['message'] ?? 'Eroare la comunicarea cu serverul');
+      }
+    } on FormatException {
+      throw Exception('Serverul nu răspunde corect (status: ${response.statusCode})');
     }
   }
   

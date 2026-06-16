@@ -15,4 +15,6 @@ class ApiConfig {
   
   static const String photoUpload = '/photo/upload';
   static String photoDelete(String cloudinaryId) => '/photo/$cloudinaryId';
+
+  static const String reports = '/reports';
 }
