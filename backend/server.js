@@ -37,6 +37,19 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'DatingX API is running' });
 });
 
+// Public policy pages (explicit routes for clean URLs without .html extension)
+app.get('/privacy-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy-policy.html'));
+});
+
+app.get('/account-deletion', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'account-deletion.html'));
+});
+
+app.get('/child-safety-standards', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'child-safety-standards.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
