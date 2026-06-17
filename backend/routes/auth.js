@@ -1,5 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
@@ -175,5 +177,104 @@ router.delete('/account', authMiddleware, async (req, res) => {
     });
   }
 });
+
+// Forgot password - trimite cod pe email
+router.post('/forgot-password',
+  [body('email').isEmail().normalizeEmail()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: 'Email invalid.' });
+      }
+
+      const { email } = req.body;
+      const user = await User.findOne({ email });
+
+      // Răspundem mereu cu succes (securitate - nu dezvăluim dacă emailul există)
+      if (!user) {
+        return res.json({ success: true, message: 'Dacă emailul există, vei primi un cod.' });
+      }
+
+      // Generează cod 6 cifre
+      const code = crypto.randomInt(100000, 999999).toString();
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+      user.resetPasswordToken = codeHash;
+      user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
+      await user.save();
+
+      // Trimite email
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"DatingX" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Resetare parolă DatingX',
+        html: `
+          <div style="font-family:Segoe UI,Arial,sans-serif;max-width:500px;margin:0 auto;padding:32px;background:#f7f8fb;border-radius:12px;">
+            <h2 style="color:#e11d48;text-align:center;">DatingX</h2>
+            <p style="font-size:16px;">Ai solicitat resetarea parolei. Folosește codul de mai jos în aplicație:</p>
+            <div style="text-align:center;margin:32px 0;">
+              <span style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#1f2937;background:#ffffff;padding:16px 24px;border-radius:8px;border:2px solid #e5e7eb;">${code}</span>
+            </div>
+            <p style="color:#6b7280;font-size:14px;">Codul este valabil <strong>1 oră</strong>. Dacă nu ai solicitat resetarea parolei, ignoră acest email.</p>
+          </div>
+        `,
+      });
+
+      res.json({ success: true, message: 'Dacă emailul există, vei primi un cod.' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ success: false, message: 'Eroare la trimiterea emailului.' });
+    }
+  }
+);
+
+// Reset password - validează codul și setează parola nouă
+router.post('/reset-password',
+  [
+    body('email').isEmail().normalizeEmail(),
+    body('code').isLength({ min: 6, max: 6 }).isNumeric(),
+    body('password').isLength({ min: 6 }),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: 'Date invalide.' });
+      }
+
+      const { email, code, password } = req.body;
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+      const user = await User.findOne({
+        email,
+        resetPasswordToken: codeHash,
+        resetPasswordExpires: { $gt: new Date() },
+      });
+
+      if (!user) {
+        return res.status(400).json({ success: false, message: 'Cod invalid sau expirat.' });
+      }
+
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+
+      res.json({ success: true, message: 'Parola a fost resetată cu succes!' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ success: false, message: 'Eroare la resetarea parolei.' });
+    }
+  }
+);
 
 module.exports = router;

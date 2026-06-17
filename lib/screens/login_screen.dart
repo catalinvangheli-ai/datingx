@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
-import 'welcome_screen.dart';
 import 'main_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,24 +52,16 @@ class _LoginScreenState extends State<LoginScreen> {
       // Încarcă profilul din backend
       final profileData = await authProvider.loadUserProfileFromServer();
       print('📋 Profile data received: $profileData');
-      
-      // Verifică dacă profilul este complet
-      if (profileData != null && profileData['profileComplete'] == true) {
-        print('✅ Profile complete! Navigating to MainScreen...');
-        // Profilul e complet - mergi direct la MainScreen
+
+      // Profilul rămâne opțional. Dacă există, îl încărcăm local.
+      if (profileData != null) {
         userProvider.loadUserProfileFromServer(profileData);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      } else {
-        print('⚠️ Profile incomplete or missing. Navigating to WelcomeScreen...');
-        print('   - profileData is null: ${profileData == null}');
-        print('   - profileComplete value: ${profileData?['profileComplete']}');
-        // Profilul incomplet sau lipsește - mergi la WelcomeScreen pentru setup
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-        );
       }
+
+      // După autentificare mergem mereu în aplicație.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
     }
   }
 
@@ -261,6 +253,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+
+                        // Ai uitat parola
+                        if (_isLogin)
+                          TextButton(
+                            onPressed: () {
+                              Provider.of<AuthProvider>(context, listen: false)
+                                  .clearError();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Ai uitat parola?',
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w400,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

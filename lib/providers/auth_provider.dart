@@ -234,4 +234,49 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  // Trimite cod de resetare parolă pe email
+  Future<bool> forgotPassword(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.forgotPassword(email);
+      _isLoading = false;
+      notifyListeners();
+      return response['success'] == true;
+    } catch (e) {
+      _error = 'Eroare la trimiterea emailului.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Resetează parola cu codul primit pe email
+  Future<bool> resetPassword(String email, String code, String password) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.resetPassword(email, code, password);
+      if (response['success'] == true) {
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = response['message'] ?? 'Cod invalid sau expirat.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Eroare la resetarea parolei.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

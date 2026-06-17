@@ -68,6 +68,25 @@ class ApiService {
     
     return _handleResponse(response);
   }
+
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authForgotPassword}'),
+      headers: _getHeaders(includeAuth: false),
+      body: jsonEncode({'email': email}),
+    );
+    return _handleResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> resetPassword(
+      String email, String code, String password) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authResetPassword}'),
+      headers: _getHeaders(includeAuth: false),
+      body: jsonEncode({'email': email, 'code': code, 'password': password}),
+    );
+    return _handleResponse(response);
+  }
   
   // Profile endpoints
   static Future<Map<String, dynamic>> getProfile() async {
