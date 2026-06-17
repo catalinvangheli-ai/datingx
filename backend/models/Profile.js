@@ -65,7 +65,6 @@ const profileSchema = new mongoose.Schema({
 });
 
 // Index for searching
-profileSchema.index({ userId: 1 });
 profileSchema.index({ gender: 1, age: 1, country: 1 });
 
 module.exports = mongoose.model('Profile', profileSchema);
