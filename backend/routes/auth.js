@@ -204,15 +204,14 @@ router.post('/forgot-password',
       user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
       await user.save();
 
-      // Trimite email
+      // Trimite email via Brevo SMTP (funcționează pe Railway)
       const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: 'smtp-relay.brevo.com',
         port: 587,
-        secure: false, // STARTTLS on port 587
-        family: 4,     // forțează IPv4 (Railway nu suportă IPv6 outbound)
+        secure: false,
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
+          user: process.env.BREVO_SMTP_USER,
+          pass: process.env.BREVO_SMTP_PASS,
         },
       });
 
