@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
@@ -204,20 +204,12 @@ router.post('/forgot-password',
       user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
       await user.save();
 
-      // Trimite email via Brevo SMTP (funcționează pe Railway)
-      const transporter = nodemailer.createTransport({
-        host: 'smtp-relay.brevo.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.BREVO_SMTP_USER,
-          pass: process.env.BREVO_SMTP_PASS,
-        },
-      });
+      // Trimite email via Resend API
+      const resend = new Resend(process.env.RESEND_API_KEY);
 
-      await transporter.sendMail({
-        from: `"DatingX" <${process.env.EMAIL_USER}>`,
-        to: email,
+      await resend.emails.send({
+        from: 'DatingX <onboarding@resend.dev>',
+        to: [email],
         subject: 'Resetare parolă DatingX',
         html: `
           <div style="font-family:Segoe UI,Arial,sans-serif;max-width:500px;margin:0 auto;padding:32px;background:#f7f8fb;border-radius:12px;">
