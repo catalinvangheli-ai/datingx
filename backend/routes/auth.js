@@ -206,7 +206,10 @@ router.post('/forgot-password',
 
       // Trimite email
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // STARTTLS on port 587
+        family: 4,     // forțează IPv4 (Railway nu suportă IPv6 outbound)
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
